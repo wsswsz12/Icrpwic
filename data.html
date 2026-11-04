@@ -1,0 +1,2556 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>海外项目周管理平台 · 数据填报</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Inter','PingFang SC','Microsoft YaHei',sans-serif;}
+body{background:#f0f4f8;height:100vh;overflow:hidden;color:#1e2d3d;display:flex;flex-direction:column;font-size:13px;}
+
+/* 顶部栏 */
+.header{height:56px;padding:0 20px;display:flex;align-items:center;justify-content:space-between;gap:16px;background:#fff;border-bottom:1px solid #e2e8f0;flex-shrink:0;}
+.header-left{display:flex;align-items:center;gap:12px;min-width:0;}
+.pn-badge{background:#1a3a5c;color:#fff;padding:5px 12px;border-radius:6px;font-size:12px;font-weight:600;letter-spacing:0.5px;white-space:nowrap;}
+.pn-name{font-size:15px;font-weight:600;color:#1a3a5c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pn-code{font-size:12px;color:#8899aa;white-space:nowrap;}
+.header-center{display:flex;align-items:center;gap:10px;flex:1;justify-content:center;min-width:0;}
+.po-select{display:flex;align-items:center;gap:8px;background:#f5f8fc;border:1px solid #d0dce8;border-radius:8px;padding:5px 12px;}
+.po-select label{font-size:12px;color:#5a7a9a;white-space:nowrap;}
+.po-select select{background:transparent;border:none;font-size:13px;font-weight:600;color:#1a3a5c;outline:none;cursor:pointer;max-width:210px;}
+.search-box{display:flex;align-items:center;background:#f5f8fc;border:1px solid #d0dce8;border-radius:8px;padding:5px 12px;gap:6px;min-width:0;}
+.search-box input{border:none;background:transparent;outline:none;font-size:12px;width:150px;color:#1e2d3d;}
+.search-box input::placeholder{color:#99aabb;}
+.header-right{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.btn{display:inline-flex;align-items:center;gap:5px;border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;transition:all .18s;white-space:nowrap;}
+.btn-ghost{background:#f5f8fc;border:1px solid #d0dce8;color:#3a5a7a;}
+.btn-ghost:hover{background:#e8f2fb;border-color:#a0c0e0;}
+.btn-primary{background:#1a3a5c;border:1px solid #1a3a5c;color:#fff;}
+.btn-primary:hover{background:#244a6e;border-color:#244a6e;}
+
+/* 概览：4 列指标卡（两行对齐）+ 右侧趋势卡（跨两行） */
+.overview{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) minmax(198px,1.08fr);
+  grid-template-rows:auto auto;gap:8px;padding:10px 20px 11px;background:#fff;
+  border-bottom:1px solid #e2e8f0;flex-shrink:0;}
+.ov-card{position:relative;display:flex;flex-direction:column;justify-content:center;
+  background:#fff;border:1px solid #e4eaf1;border-radius:7px;padding:6px 12px 7px 14px;
+  min-width:0;transition:border-color .18s,box-shadow .18s;}
+.ov-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:#ccd8e4;border-radius:7px 0 0 7px;}
+.ov-card:hover{border-color:#b3cade;box-shadow:0 1px 3px rgba(26,58,92,.07);}
+/* 分组配色：订单交付=蓝 / 实物在管=青 / 齐套=绿 / 风险=红 */
+.ov-card.dlv::before{background:#2f7fb8;}
+.ov-card.flow::before{background:#3f9e8c;}
+.ov-card.kit::before{background:#4a9c6d;}
+.ov-card.risk::before{background:#cf5050;}
+.ov-label{font-size:10.5px;color:#7a9ab8;letter-spacing:.4px;white-space:nowrap;line-height:1.35;}
+.ov-value{font-size:20px;font-weight:700;font-family:'Roboto Mono',monospace;color:#1a3a5c;
+  line-height:1.2;letter-spacing:-.3px;white-space:nowrap;}
+.ov-value .unit{font-size:10.5px;color:#8aa4bd;margin-left:2px;font-weight:400;letter-spacing:0;}
+.ov-card.dlv .ov-value{color:#1a5f92;}
+.ov-card.flow .ov-value{color:#1c6d61;}
+.ov-card.kit .ov-value{color:#2f7d54;}
+.ov-card.kit.warn .ov-value{color:#c07b12;}
+.ov-card.kit.bad .ov-value{color:#c0392b;}
+.ov-card.risk{cursor:pointer;}
+.ov-card.risk .ov-value{color:#c0392b;}
+.ov-card.risk.ok .ov-value{color:#3a9c6b;}
+.ov-card.risk.active{border-color:#e29b9b;background:#fffbfb;}
+.ov-sub{font-size:10px;color:#93a7ba;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.35;}
+/* 细进度条：统一 3px，只在有明确分母的卡上出现 */
+.ov-bar{height:3px;border-radius:2px;background:#eef2f7;margin-top:5px;overflow:hidden;display:flex;}
+.ov-bar i{display:block;height:100%;background:#5d9ccb;transition:width .45s ease;}
+.ov-card.flow .ov-bar i{background:#63b3a5;}
+.ov-card.kit .ov-bar i{background:#6bb184;}
+.ov-card.kit.warn .ov-bar i{background:#e0a13a;}
+.ov-card.kit.bad .ov-bar i{background:#cf5050;}
+.ov-bar i.e{background:#cf5050;}
+.ov-bar i.w{background:#e0a13a;}
+/* 趋势卡 */
+.ov-card.trend{grid-column:5;grid-row:1 / span 2;padding:8px 12px 7px 14px;justify-content:flex-start;}
+.ov-card.trend::before{background:#8fa3b8;}
+.ov-trend-head{display:flex;justify-content:space-between;align-items:baseline;gap:6px;}
+.ov-trend-head .legend{font-size:9.5px;color:#a8b8c8;white-space:nowrap;}
+.ov-trend-head .legend b{font-weight:400;color:#2f7fb8;}
+.ov-trend-body{flex:1;display:flex;flex-direction:column;justify-content:center;min-height:0;margin:2px 0 1px;}
+.ov-trend-body svg{width:100%;display:block;height:58px;overflow:visible;}
+.ov-trend-x{display:flex;margin-top:3px;}
+.ov-trend-x span{flex:1;text-align:center;font-size:8.5px;color:#b4c2d0;white-space:nowrap;letter-spacing:-.2px;}
+.ov-trend-x span.cur{color:#5d7f9e;font-weight:700;}
+.ov-trend-foot{display:flex;justify-content:space-between;font-size:9.5px;color:#93a7ba;letter-spacing:.2px;}
+.ov-trend-foot span{white-space:nowrap;}
+.ov-trend-foot b{color:#1a3a5c;font-family:'Roboto Mono',monospace;font-weight:700;font-size:10.5px;}
+/* 窄屏：趋势卡下移到整行，避免 4 列被压扁 */
+@media (max-width:1280px){
+  .overview{grid-template-columns:repeat(4,minmax(0,1fr));}
+  .ov-card.trend{grid-column:1 / -1;grid-row:3;}
+  .ov-trend-body svg{height:46px;}
+}
+
+/* 主体三栏 */
+.main{flex:1;display:flex;overflow:hidden;position:relative;}
+
+/* 左侧筛选 */
+.filter-panel{width:200px;padding:14px 12px;background:#fff;border-right:1px solid #e2e8f0;overflow-y:auto;flex-shrink:0;}
+.filter-group{margin-bottom:14px;}
+.filter-title{font-size:11px;font-weight:600;color:#5a7a9a;letter-spacing:.5px;margin-bottom:7px;text-transform:uppercase;}
+.filter-item{display:flex;align-items:center;gap:7px;padding:5px 6px;border-radius:6px;cursor:pointer;transition:background .15s;font-size:12px;color:#3a5a7a;}
+.filter-item:hover{background:#f0f4f8;}
+.filter-item input[type="checkbox"]{accent-color:#1a3a5c;width:14px;height:14px;cursor:pointer;}
+.filter-item .count{margin-left:auto;font-size:10px;color:#99aabb;background:#f0f4f8;padding:1px 6px;border-radius:8px;}
+.filter-divider{height:1px;background:#eef2f6;margin:12px 0;}
+.filter-clear{font-size:11px;color:#1a6ab0;cursor:pointer;text-align:right;}
+.filter-clear:hover{text-decoration:underline;}
+.risk-toggle{display:flex;align-items:center;gap:7px;padding:6px;background:#fff7f7;border:1px solid #f3dede;border-radius:6px;font-size:12px;color:#b05252;cursor:pointer;}
+.risk-toggle input{accent-color:#c0392b;width:14px;height:14px;cursor:pointer;}
+
+/* 中间表格 */
+.table-panel{flex:1;display:flex;flex-direction:column;overflow:hidden;background:#fff;min-width:0;}
+.table-header{padding:9px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #eef2f6;flex-shrink:0;gap:10px;}
+.table-header .title{font-size:13px;font-weight:600;color:#1a3a5c;}
+.table-header .total{font-size:11px;color:#8899aa;white-space:nowrap;}
+.tabs{display:flex;gap:5px;}
+.tab-btn{padding:4px 11px;border-radius:7px;border:1px solid #d0dce8;background:#f5f8fc;font-size:11px;color:#3a5a7a;cursor:pointer;transition:all .15s;font-family:inherit;}
+.tab-btn:hover{background:#e8f2fb;}
+.tab-btn.active{background:#1a3a5c;color:#fff;border-color:#1a3a5c;font-weight:600;}
+.table-wrapper{flex:1;overflow:auto;}
+.table-wrapper.hidden{display:none;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+thead{position:sticky;top:0;z-index:2;}
+th{background:#f8fafc;color:#5a7a9a;font-weight:600;text-align:left;padding:9px 10px;border-bottom:1px solid #e2e8f0;white-space:nowrap;font-size:11px;letter-spacing:.3px;cursor:pointer;user-select:none;}
+th.no-sort{cursor:default;}
+th:hover{color:#1a3a5c;}
+th .sort-icon{font-size:9px;margin-left:3px;color:#b0c0d0;}
+th.sorted .sort-icon{color:#1a3a5c;}
+td{padding:8px 10px;border-bottom:1px solid #f0f4f8;color:#3a5a7a;vertical-align:middle;white-space:nowrap;}
+tbody tr{cursor:pointer;transition:background .15s;}
+tbody tr:hover{background:#f5f9fd;}
+tbody tr.selected{background:#e8f2fb;}
+tbody tr.risk-row td:first-child{box-shadow:inset 3px 0 0 #e08a8a;}
+.tag{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:500;margin-right:3px;}
+.tag.cn{background:#e0f0ff;color:#1a6ab0;}
+.tag.ov{background:#fff3e0;color:#b06000;}
+.tag.stage-cell{background:#e6f7ee;color:#1a8a4a;}
+.tag.stage-mp{background:#e0f0ff;color:#1a6ab0;}
+.tag.stage-repack{background:#fff8e0;color:#b08800;}
+.num-green{color:#1a8a4a;font-weight:600;font-family:'Roboto Mono',monospace;}
+.num-yellow{color:#d48806;font-weight:600;font-family:'Roboto Mono',monospace;}
+.num-plain{font-family:'Roboto Mono',monospace;}
+.editable{border-bottom:1px dashed transparent;cursor:text;}
+.editable:hover{border-bottom-color:#a0c0e0;background:#f5f9fd;}
+.cell-input{width:52px;padding:2px 4px;border:1px solid #7fb2dd;border-radius:4px;font-family:'Roboto Mono',monospace;font-size:12px;color:#1a3a5c;outline:none;background:#fff;}
+.progress-mini{display:flex;align-items:center;gap:6px;min-width:92px;}
+.progress-mini .bar{flex:1;height:5px;background:#eef2f6;border-radius:3px;overflow:hidden;min-width:40px;}
+.progress-mini .fill{height:100%;background:linear-gradient(90deg,#4a90d0,#1a3a5c);border-radius:3px;}
+.progress-mini .fill.done{background:linear-gradient(90deg,#66bb6a,#1a8a4a);}
+.progress-mini .pct{font-size:11px;font-family:'Roboto Mono',monospace;color:#5a7a9a;min-width:32px;text-align:right;}
+.ship-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:500;}
+.ship-badge.wait{background:#f0f4f8;color:#7a9ab8;}
+.ship-badge.transit{background:#e0f0ff;color:#1a6ab0;}
+.ship-badge.arrived{background:#e6f7ee;color:#1a8a4a;}
+.ship-badge.done{background:#eef7e6;color:#3a8a1a;}
+.risk-chip{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600;cursor:help;}
+.risk-chip.ok{background:#eef7f1;color:#3a8a5a;}
+.risk-chip.warn{background:#fff8e0;color:#a37c1a;}
+.risk-chip.error{background:#ffeaea;color:#c0392b;}
+.action-link{color:#1a6ab0;font-size:11px;cursor:pointer;text-decoration:none;}
+.action-link:hover{text-decoration:underline;}
+.empty-row td{text-align:center;padding:40px;color:#99aabb;font-size:12px;}
+.lg-transit{display:inline-block;padding:1px 6px;border-radius:4px;font-size:10px;background:#e0f0ff;color:#1a6ab0;font-weight:600;}
+.lg-next{font-size:10px;color:#7a9ab8;}
+.lg-bad{color:#c0392b;font-weight:700;}
+
+/* 周时间轴 */
+.tl-view{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0;}
+.tl-view.hidden{display:none;}
+.tl-scroll{flex:1;overflow:auto;min-height:0;}
+.tl-table{table-layout:fixed;border-collapse:collapse;}
+.tl-table thead{position:sticky;top:0;z-index:3;}
+.tl-table tfoot td{position:sticky;bottom:0;z-index:2;}
+.tl-table th{text-align:center;padding:7px 4px;font-size:10px;font-weight:600;color:#5a7a9a;background:#f8fafc;border-left:1px solid #f0f4f8;}
+.tl-table th.tl-cur{background:#eaf4fd;color:#1a6ab0;}
+.tl-table th.tl-label{text-align:left;padding-left:12px;}
+.tl-table td{border-left:1px solid #f0f4f8;padding:6px 4px;vertical-align:top;}
+/* 阶段列 / 各周单元格：内容水平+垂直居中（覆盖上面的 vertical-align:top） */
+.tl-table td.tl-stage-cell,.tl-table td.tl-cell{vertical-align:middle;}
+/* PO 列：宽度减半，只留 ID / 名称（单行省略）/ 截止周 */
+.tl-po-cell{background:#fafcff;border-right:1px solid #e2e8f0;white-space:normal;padding:7px 8px;vertical-align:top;}
+.tl-po-wrap{width:92px;overflow:hidden;}
+.tl-po-id{font-family:'Roboto Mono',monospace;font-size:11px;font-weight:700;color:#1a3a5c;white-space:nowrap;}
+.tl-po-name{font-size:10px;color:#5a7a9a;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.tl-chips{margin-top:4px;display:flex;flex-wrap:wrap;gap:3px;}
+.tl-chip{display:inline-block;padding:1px 5px;border-radius:4px;font-size:8.5px;font-weight:600;background:#eef7f1;color:#1a8a4a;white-space:nowrap;}
+.tl-chip.warn{background:#fff8e0;color:#a37c1a;}
+.tl-chip.bad{background:#ffeaea;color:#c0392b;}
+/* 阶段列：生产 / 运输，副标题小字标基地·产出 或 起讫港·运输周期；列宽由内容实测决定 */
+.tl-col-stage{min-width:0;}
+.tl-stage-cell{text-align:center;vertical-align:middle;padding:4px 3px;background:#fdfeff;border-left:1px solid #f0f4f8;}
+.tl-stage-cell .st{font-size:10px;font-weight:700;color:#4a6a8a;letter-spacing:.5px;line-height:1.25;}
+.tl-stage-cell .st.prod{color:#1a5f9a;}
+.tl-stage-cell .st.ship{color:#7a5aa0;}
+.tl-stage-cell small{display:block;margin-top:2px;font-size:7.5px;color:#a2b3c4;font-weight:400;
+  white-space:nowrap;overflow:visible;line-height:1.25;}
+.tl-cell{height:28px;text-align:center;font-family:'Roboto Mono',monospace;font-size:11px;position:relative;padding:3px 3px;vertical-align:middle;}
+.tl-cell.log{height:26px;}
+.tl-cell.cur{background:#f7fbff;}
+.tl-table tbody tr.po-start td{border-top:1px solid #e2e8f0;}
+.tl-table tbody tr.po-ship td{background:#fbfcfe;}
+.tl-cell.log:not(.cur){background:#fcfdff;}
+/* W-1：生产行 达成（主）+ 达成率（副）+ GAP/环比（小字）；运输行 发运方式图标 + 已发运量 */
+.w1-text{font-size:9px;line-height:1.5;color:#94a9bd;white-space:nowrap;font-variant-numeric:tabular-nums;}
+.w1-main{display:flex;align-items:baseline;justify-content:center;gap:4px;line-height:1.2;white-space:nowrap;}
+.w1-main b{font-family:'Roboto Mono',monospace;font-size:12px;font-weight:700;color:#33587a;}
+.w1-main b.pos{color:#1a8a4a;}
+.w1-main b.mid{color:#c98a12;}
+.w1-main b.bad{color:#c0392b;}
+.w1-rate{font-family:'Roboto Mono',monospace;font-size:9px;font-weight:600;color:#8aa2b8;}
+.w1-rate.pos{color:#1a8a4a;}
+.w1-rate.mid{color:#c98a12;}
+.w1-rate.bad{color:#c0392b;}
+.w1-sub{font-size:8px;line-height:1.4;color:#9fb2c4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  font-variant-numeric:tabular-nums;}
+.w1-sub b{font-family:'Roboto Mono',monospace;font-weight:700;}
+.w1-sub b.pos{color:#1a8a4a;}
+.w1-sub b.bad{color:#c0392b;}
+.w1-sub b.mid{color:#c98a12;}
+/* 运输行：方式图标 + 发运/到港量（整格垂直居中） */
+.ship-w1{display:flex;align-items:center;justify-content:center;gap:3px;line-height:1;white-space:nowrap;height:20px;}
+.ship-w1 b{font-family:'Roboto Mono',monospace;font-size:11px;font-weight:700;color:#33587a;}
+.ship-w1 .u{font-size:7.5px;color:#a2b3c4;}
+.ship-w1.off b{color:#b9c8d6;}
+.mi{display:inline-block;vertical-align:-1px;color:#5a7a9a;flex:0 0 auto;}
+.ship-w1.off .mi{color:#c3d0dc;}
+.ship-w1.ok b{color:#1a8a4a;}
+.ship-w1.ok .u{color:#79bb95;}
+/* 当前周：横道（灰底=计划，绿色=已达成），横道上下各一行数值：计划 达成 / GAP 环比 */
+.bar-vals{display:flex;justify-content:space-between;gap:2px;font-size:8px;line-height:1.25;color:#7b8fa3;
+  white-space:nowrap;font-variant-numeric:tabular-nums;}
+.bar-vals b{font-weight:700;color:#33587a;}
+.bar-vals .pos{color:#1a8a4a;}
+.bar-vals .bad{color:#c0392b;}
+.bar-box{position:relative;height:9px;margin:1px 1px;background:#e6edf5;border-radius:2px;overflow:hidden;}
+.bar-fill{position:absolute;left:0;top:0;bottom:0;background:#3a9c6b;border-radius:2px;}
+.bar-fill.over{background:#1a8a4a;}
+/* 未来周（生产）：虚线框内直接输入周计划 */
+.plan-cell{padding:3px 2px;}
+.plan-input{width:100%;box-sizing:border-box;height:21px;border:1px dashed #bdd2e6;border-radius:3px;background:#fff;
+  font-family:'Roboto Mono',monospace;font-size:9.5px;color:#33587a;text-align:center;padding:0 1px;outline:none;
+  -moz-appearance:textfield;}
+.plan-input::-webkit-outer-spin-button,.plan-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+.plan-input:hover{border-color:#8fb8dc;background:#fbfdff;}
+.plan-input:focus{border-style:solid;border-color:#1a6ab0;box-shadow:0 0 0 2px rgba(26,106,176,.12);}
+.plan-input.none{color:#c3d0dc;}
+/* 运输行：未来周单短线表示发运（一段一条 ETD→ETA）；当前周显示到港量或发运量 */
+.lg-one{position:absolute;left:2px;right:2px;top:50%;height:0;margin-top:-1px;border-top:2px solid #a8bccf;pointer-events:none;}
+.lg-one.c-y{border-top-color:#c98a12;}
+.lg-one.c-r{border-top-color:#c0392b;}
+/* 底部固定条：图例 + 范围合计（不随明细滚动） */
+.tl-legend{padding:6px 14px;font-size:10px;color:#93a7ba;display:flex;gap:14px;flex-wrap:wrap;
+  justify-content:space-between;align-items:center;border-top:1px solid #e2e8f0;background:#fbfdff;flex-shrink:0;}
+.tl-legend-main{display:flex;gap:14px;flex-wrap:wrap;align-items:center;line-height:1.5;}
+.tl-legend b{color:#5a7a9a;font-weight:600;}
+/* 图例内的「真样本」小样 */
+.lg{display:inline-flex;align-items:center;gap:4px;white-space:nowrap;}
+.lg-dot{display:inline-block;width:7px;height:7px;border-radius:50%;font-style:normal;vertical-align:0;margin:0 1px;}
+.lg-dot.g{background:#1a8a4a;}
+.lg-dot.y{background:#c98a12;}
+.lg-dot.r{background:#c0392b;}
+.lg-bar{position:relative;display:inline-block;width:22px;height:7px;border-radius:2px;background:#e6edf5;
+  overflow:hidden;font-style:normal;vertical-align:-1px;}
+.lg-bar i{position:absolute;left:0;top:0;bottom:0;width:68%;background:#3a9c6b;}
+.lg-box{display:inline-block;min-width:20px;height:14px;line-height:12px;padding:0 2px;border:1px dashed #bdd2e6;
+  border-radius:3px;background:#fff;color:#33587a;font-family:'Roboto Mono',monospace;font-size:9px;
+  text-align:center;font-style:normal;vertical-align:-2px;}
+.lg-line{display:inline-block;width:20px;height:0;border-top:2px solid #a8bccf;font-style:normal;vertical-align:3px;}
+.lg-line.y{border-top-color:#c98a12;}
+.lg-line.r{border-top-color:#c0392b;}
+.lg-dim{color:#b3c3d2;font-style:normal;}
+.tl-legal{font-size:9px;color:#aebfd0;white-space:nowrap;letter-spacing:.2px;padding-left:10px;border-left:1px solid #e2e8f0;}
+/* 周合计行 */
+.tl-table tfoot td{background:#f6f9fc;border-top:1px solid #e2e8f0;border-left:1px solid #f0f4f8;
+  text-align:center;font-family:'Roboto Mono',monospace;font-size:10px;font-weight:700;padding:5px 3px;}
+.tl-table tfoot td.tl-label{text-align:left;padding-left:12px;color:#5a7a9a;font-family:inherit;font-weight:600;letter-spacing:.4px;}
+.tl-table tfoot td.pos{color:#1a8a4a;}
+.tl-table tfoot td.mid{color:#c98a12;}
+.tl-table tfoot td.bad{color:#c0392b;}
+.tl-table tfoot td.none{color:#c8d4e0;font-weight:400;}
+.tl-empty{padding:40px;text-align:center;color:#99aabb;font-size:12px;}
+
+/* 分页 */
+.pagination{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 16px;border-top:1px solid #eef2f6;flex-shrink:0;font-size:12px;color:#5a7a9a;}
+.pagination.hidden{display:none;}
+.pagination .pager{display:flex;align-items:center;gap:6px;}
+.page-btn{background:#f5f8fc;border:1px solid #d0dce8;border-radius:6px;padding:4px 9px;cursor:pointer;font-size:12px;color:#3a5a7a;transition:all .15s;}
+.page-btn:hover:not(:disabled){background:#e8f2fb;border-color:#a0c0e0;}
+.page-btn:disabled{opacity:.4;cursor:not-allowed;}
+.page-info{font-family:'Roboto Mono',monospace;font-size:11px;}
+.page-size{display:flex;align-items:center;gap:5px;font-size:11px;color:#8899aa;}
+.page-size select{border:1px solid #d0dce8;border-radius:5px;background:#fff;padding:2px 4px;font-size:11px;color:#3a5a7a;outline:none;}
+
+/* 右侧详情 */
+.detail-panel{width:324px;background:#fff;border-left:1px solid #e2e8f0;display:flex;flex-direction:column;flex-shrink:0;overflow:hidden;transition:width .3s ease;}
+.detail-panel.collapsed{width:0;border-left:none;}
+.detail-header{padding:14px 16px;border-bottom:1px solid #eef2f6;display:flex;align-items:flex-start;justify-content:space-between;flex-shrink:0;gap:8px;}
+.detail-header h3{font-size:14px;font-weight:700;color:#1a3a5c;margin-bottom:3px;}
+.detail-header .sub{font-size:11px;color:#8899aa;}
+.close-detail{background:none;border:none;color:#99aabb;font-size:16px;cursor:pointer;padding:2px 6px;border-radius:4px;transition:all .15s;}
+.close-detail:hover{background:#f0f4f8;color:#5a7a9a;}
+.detail-body{flex:1;overflow-y:auto;padding:14px 16px;}
+.detail-section{margin-bottom:16px;}
+.detail-section-title{font-size:11px;font-weight:600;color:#7a9ab8;letter-spacing:.5px;margin-bottom:8px;text-transform:uppercase;}
+.field-grid{display:flex;flex-direction:column;gap:6px;}
+.field{display:flex;align-items:center;gap:8px;min-width:0;}
+.field-label{font-size:10px;color:#99aabb;width:58px;flex-shrink:0;white-space:nowrap;}
+.field-value{flex:1;min-width:0;font-size:12px;color:#1a3a5c;font-weight:600;overflow-wrap:anywhere;}
+.field-input,.field-select{flex:1;min-width:0;width:auto;padding:4px 7px;border:1px solid #d0dce8;border-radius:6px;font-size:12px;color:#1a3a5c;background:#fafcff;outline:none;transition:border-color .15s;}
+.field-input:focus,.field-select:focus{border-color:#7fb2dd;background:#fff;}
+.stage-card{background:#f8fafc;border:1px solid #eef2f6;border-radius:8px;padding:10px 12px;margin-bottom:8px;}
+.stage-card.ov{background:#fffdf7;border-color:#f0e6c8;}
+.stage-card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px;}
+.stage-name{font-size:12px;font-weight:600;color:#1a3a5c;}
+.stage-status{font-size:10px;padding:2px 8px;border-radius:8px;background:#eef3f8;color:#5a7a9a;white-space:nowrap;}
+.stage-status.run{background:#fff8e0;color:#a37c1a;}
+.stage-status.ok{background:#e6f7ee;color:#1a8a4a;}
+.stage-status.bad{background:#ffeaea;color:#c0392b;}
+.stage-card-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.stage-metric{display:flex;flex-direction:column;gap:2px;}
+.stage-metric .m-label{font-size:10px;color:#99aabb;}
+.stage-metric .m-value{font-size:15px;font-weight:700;font-family:'Roboto Mono',monospace;color:#1a3a5c;}
+.stage-metric input{width:100%;padding:4px 6px;border:1px solid #dce6f0;border-radius:5px;font-family:'Roboto Mono',monospace;font-size:13px;font-weight:600;color:#1a3a5c;background:#fff;outline:none;}
+.stage-metric input:focus{border-color:#7fb2dd;}
+.kit-bar{display:flex;align-items:center;gap:7px;margin-top:9px;}
+.kit-bar .bar{flex:1;height:6px;background:#eef2f6;border-radius:3px;overflow:hidden;}
+.kit-bar .fill{height:100%;background:linear-gradient(90deg,#66bb6a,#1a8a4a);border-radius:3px;}
+.kit-bar .fill.warn{background:linear-gradient(90deg,#f0c060,#d48806);}
+.kit-bar .fill.bad{background:linear-gradient(90deg,#e88a8a,#c0392b);}
+.kit-bar .pct{font-size:10px;font-family:'Roboto Mono',monospace;color:#5a7a9a;}
+.route-item{background:#f8fafc;border:1px solid #eef2f6;border-radius:8px;padding:9px 12px;margin-bottom:6px;}
+.route-item.own{background:#f4f9ff;border-color:#cfe0f0;}
+.flow-head{font-size:10px;font-weight:700;color:#5a7a9a;margin:8px 0 5px;letter-spacing:.4px;}
+.flow-head:first-child{margin-top:0;}
+.route-path{font-size:12px;color:#3a5a7a;margin-bottom:6px;display:flex;align-items:center;flex-wrap:wrap;gap:2px;}
+.route-path .arrow{color:#b0c0d0;margin:0 5px;}
+.route-own-tag{margin-left:7px;padding:0 6px;border-radius:3px;font-size:9px;background:#e0f0ff;color:#1a6ab0;font-weight:600;}
+.route-edit{display:flex;align-items:center;gap:8px;font-size:10px;color:#8899aa;flex-wrap:wrap;}
+.route-mode{display:inline-flex;align-items:center;gap:4px;padding:1px 7px;border-radius:4px;font-size:10px;}
+.route-mode.truck{background:#e6f7ee;color:#1a8a4a;}
+.route-mode.train{background:#fff8e0;color:#b08800;}
+.route-mode.ship{background:#e0f0ff;color:#1a6ab0;}
+.route-weeks{width:48px;padding:3px 5px;border:1px solid #dce6f0;border-radius:5px;font-family:'Roboto Mono',monospace;font-size:11px;color:#1a3a5c;background:#fff;outline:none;}
+.route-qty{width:58px;padding:3px 5px;border:1px solid #dce6f0;border-radius:5px;font-family:'Roboto Mono',monospace;font-size:11px;color:#1a3a5c;background:#fff;outline:none;}
+.route-wk{width:74px;padding:3px 5px;border:1px solid #dce6f0;border-radius:5px;font-family:'Roboto Mono',monospace;font-size:11px;color:#1a3a5c;background:#fff;outline:none;}
+.route-eta{font-size:10px;color:#1a8a4a;font-weight:600;font-family:'Roboto Mono',monospace;}
+.route-eta.bad{color:#c0392b;}
+.route-status{font-size:10px;padding:2px 6px;border-radius:5px;border:1px solid #cfe8da;background:#fff;color:#3a7a5a;outline:none;cursor:pointer;}
+.route-status.delay{border-color:#f0b8b8;color:#c0392b;background:#fff5f5;}
+.risk-list{list-style:none;display:flex;flex-direction:column;gap:6px;}
+.risk-list li{display:flex;gap:6px;font-size:11px;line-height:1.5;padding:7px 9px;border-radius:6px;background:#fff8e0;color:#8a6a1a;border:1px solid #f3e4c0;}
+.risk-list li.error{background:#fff2f2;color:#b03a3a;border-color:#f4cfcf;}
+.risk-list li.ok{background:#eef7f1;color:#3a8a5a;border-color:#d4ebdd;}
+.risk-list .r-ico{flex-shrink:0;font-weight:700;}
+.detail-footer{padding:10px 16px;border-top:1px solid #eef2f6;font-size:10px;color:#99aabb;text-align:right;flex-shrink:0;}
+.detail-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#b0c0d0;font-size:12px;gap:8px;padding:20px;text-align:center;}
+.detail-empty .big-icon{font-size:32px;opacity:.4;}
+
+/* 数据周 */
+.week-badge{display:flex;align-items:center;gap:5px;background:#f0f7ff;border:1px solid #cfe0f4;color:#2a5a8a;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:600;white-space:nowrap;cursor:help;}
+.week-badge .wk-dot{width:6px;height:6px;border-radius:50%;background:#4a90d0;}
+.wk-delta{display:inline-block;margin-left:5px;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600;font-family:'Roboto Mono',monospace;vertical-align:middle;}
+.wk-delta.up{background:#e6f7ee;color:#1a8a4a;}
+.wk-delta.down{background:#ffeaea;color:#c0392b;}
+.wk-delta.flat{background:#f0f4f8;color:#8899aa;}
+.wk-delta.none{background:transparent;color:#b8c8d8;padding:1px 2px;}
+
+/* 详情：周进度记录 */
+.wk-row{display:flex;align-items:center;gap:7px;padding:6px 8px;border:1px solid #eef2f6;border-radius:6px;margin-bottom:5px;background:#fafcff;cursor:help;}
+.wk-row.cur{background:#f4f9ff;border-color:#bcd8f0;}
+.wk-row .wk-label{font-size:11px;font-weight:600;color:#5a7a9a;font-family:'Roboto Mono',monospace;width:62px;flex-shrink:0;}
+.wk-row.cur .wk-label{color:#1a6ab0;}
+.wk-row .wk-bar{flex:1;height:6px;background:#eef2f6;border-radius:3px;overflow:hidden;min-width:30px;}
+.wk-row .wk-fill{display:block;height:100%;background:linear-gradient(90deg,#4a90d0,#1a3a5c);border-radius:3px;}
+.wk-row.cur .wk-fill{background:linear-gradient(90deg,#56a8f0,#1a6ab0);}
+.wk-row .wk-pct{font-size:11px;font-family:'Roboto Mono',monospace;color:#3a5a7a;min-width:56px;text-align:right;flex-shrink:0;}
+.wk-row .wk-slot{width:44px;flex-shrink:0;text-align:right;}
+.wk-cur-tag{font-size:9px;padding:1px 5px;border-radius:3px;background:#e0f0ff;color:#1a6ab0;font-weight:600;white-space:nowrap;}
+.wk-note{font-size:10px;color:#99aabb;margin-top:3px;}
+.plan-edit-row{display:flex;align-items:center;gap:8px;margin-bottom:5px;padding:5px 8px;border:1px solid #eef2f6;border-radius:6px;background:#fafcff;}
+.plan-edit-row.cur{background:#f4f9ff;border-color:#bcd8f0;}
+.plan-edit-row .pl-label{font-size:11px;font-family:'Roboto Mono',monospace;color:#5a7a9a;width:62px;flex-shrink:0;}
+.plan-edit-row.cur .pl-label{color:#1a6ab0;font-weight:700;}
+.plan-edit-row input{flex:1;min-width:0;padding:3px 6px;border:1px solid #dce6f0;border-radius:5px;font-family:'Roboto Mono',monospace;font-size:12px;color:#1a3a5c;outline:none;background:#fff;}
+.plan-edit-row input:focus{border-color:#7fb2dd;}
+.plan-edit-row .pl-unit{font-size:10px;color:#99aabb;width:34px;flex-shrink:0;}
+.plan-edit-row .pl-act{font-size:10px;color:#1a8a4a;font-family:'Roboto Mono',monospace;width:52px;text-align:right;flex-shrink:0;}
+
+/* Toast */
+.toast{position:fixed;left:50%;bottom:34px;transform:translate(-50%,14px);background:#1a3a5c;color:#fff;font-size:12px;padding:9px 18px;border-radius:8px;box-shadow:0 8px 24px rgba(26,58,92,.28);opacity:0;pointer-events:none;transition:all .25s;z-index:99;max-width:80vw;text-align:center;}
+.toast.show{opacity:1;transform:translate(-50%,0);}
+.toast.err{background:#b03a3a;}
+
+/* 滚动条 */
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:#c8d8e8;border-radius:3px;}
+::-webkit-scrollbar-thumb:hover{background:#a0b8d0;}
+
+@media (max-width:1500px){
+  .detail-panel{width:300px;}
+  .search-box input{width:120px;}
+  .po-select select{max-width:160px;}
+}
+@media (max-width:1180px){
+  .filter-panel{width:176px;}
+  .header-center{justify-content:flex-start;}
+  .pn-code{display:none;}
+  .header-left .pn-name{max-width:180px;}
+}
+@media (max-width:1024px){
+  .detail-panel{position:absolute;right:0;top:0;bottom:0;width:320px;z-index:30;box-shadow:-8px 0 24px rgba(26,58,92,.16);}
+  .detail-panel.collapsed{width:0;box-shadow:none;}
+  .search-box{display:none;}
+}
+</style>
+</head>
+<body>
+
+<!-- 顶部栏 -->
+<div class="header">
+  <div class="header-left">
+    <span class="pn-badge" id="pnBadge">PN</span>
+    <span class="pn-name" id="pnName">全部项目群</span>
+    <span class="pn-code" id="pnCode">--</span>
+  </div>
+  <div class="header-center">
+    <div class="po-select">
+      <label>PN 项目</label>
+      <select id="pnSelect"></select>
+    </div>
+    <div class="po-select">
+      <label>PO 批次</label>
+      <select id="poSelect"></select>
+    </div>
+    <div class="week-badge" id="weekBadge" title="数据周按日期自动切换（ISO 周）；实际值只写当前周，历史周只读留痕；未来周为计划值"><span class="wk-dot"></span><span id="weekBadgeText">数据周 --</span></div>
+    <div class="search-box">
+      <span style="color:#99aabb;">🔍</span>
+      <input type="text" id="searchInput" placeholder="搜索 PO、基地、任务ID...">
+    </div>
+  </div>
+  <div class="header-right">
+    <a class="btn btn-ghost" id="homeBtn" href="index.html" title="返回指挥中心首页" style="text-decoration:none;">← 看板首页</a>
+    <button class="btn btn-ghost" id="resetBtn">重置</button>
+  </div>
+</div>
+
+<!-- 概览：左 8 张指标卡按「订单交付 / 实物在管」两行排布，右侧趋势卡跨两行 -->
+<div class="overview">
+  <!-- 第一行：订单交付口径（分母统一=计划 BP） -->
+  <div class="ov-card dlv">
+    <div class="ov-label">交付达成</div>
+    <div class="ov-value" id="ovRate">0<span class="unit">%</span></div>
+    <div class="ov-sub" id="ovRateSub">--</div>
+    <div class="ov-bar"><i id="ovRateBar" style="width:0"></i></div>
+  </div>
+  <div class="ov-card dlv">
+    <div class="ov-label">本周达成率</div>
+    <div class="ov-value" id="ovAch">0<span class="unit">%</span></div>
+    <div class="ov-sub" id="ovAchSub">--</div>
+    <div class="ov-bar"><i id="ovAchBar" style="width:0"></i></div>
+  </div>
+  <div class="ov-card dlv" id="ovLeftCard">
+    <div class="ov-label">剩余待交</div>
+    <div class="ov-value" id="ovLeft">0<span class="unit">BP</span></div>
+    <div class="ov-sub" id="ovLeftSub">--</div>
+    <div class="ov-bar"><i id="ovLeftBar" style="width:0"></i></div>
+  </div>
+  <div class="ov-card risk" id="ovRiskCard">
+    <div class="ov-label">交付风险</div>
+    <div class="ov-value" id="ovRisk">0<span class="unit">项</span></div>
+    <div class="ov-sub" id="ovRiskSub">--</div>
+    <div class="ov-bar"><i class="e" id="ovRiskBarE" style="width:0"></i><i class="w" id="ovRiskBarW" style="width:0"></i></div>
+  </div>
+
+  <!-- 第二行：实物在管口径（货现在在哪一段） -->
+  <div class="ov-card flow" id="ovCnCard">
+    <div class="ov-label">国内厂内</div>
+    <div class="ov-value" id="ovCn">0<span class="unit">BP</span></div>
+    <div class="ov-sub" id="ovCnSub">--</div>
+    <div class="ov-bar"><i id="ovCnBar" style="width:0"></i></div>
+  </div>
+  <div class="ov-card flow" id="ovTransitCard">
+    <div class="ov-label">在途在运</div>
+    <div class="ov-value" id="ovTransit">0<span class="unit">BP</span></div>
+    <div class="ov-sub" id="ovTransitSub">--</div>
+    <div class="ov-bar"><i id="ovTransitBar" style="width:0"></i></div>
+  </div>
+  <div class="ov-card flow" id="ovOvStockCard">
+    <div class="ov-label">海外在制 / 库存</div>
+    <div class="ov-value" id="ovOvStock">0<span class="unit">BP</span></div>
+    <div class="ov-sub" id="ovOvStockSub">--</div>
+    <div class="ov-bar"><i id="ovOvStockBar" style="width:0"></i></div>
+  </div>
+  <div class="ov-card kit" id="ovKitCard">
+    <div class="ov-label">海外齐套率</div>
+    <div class="ov-value" id="ovKit">0<span class="unit">%</span></div>
+    <div class="ov-sub" id="ovKitSub">电芯到货 / 组装需求</div>
+    <div class="ov-bar"><i id="ovKitBar" style="width:0"></i></div>
+  </div>
+
+  <!-- 右侧：近 8 周周产出（柱=实际，虚线=周计划） -->
+  <div class="ov-card trend">
+    <div class="ov-trend-head">
+      <div class="ov-label">近 8 周周产出</div>
+      <div class="legend">柱 <b>实际</b> · 虚线 计划</div>
+    </div>
+    <div class="ov-trend-body" id="ovTrend"></div>
+    <div class="ov-trend-foot" id="ovTrendFoot"></div>
+  </div>
+</div>
+
+<!-- 主体 -->
+<div class="main">
+
+  <!-- 左侧筛选 -->
+  <div class="filter-panel">
+    <div class="filter-group">
+      <div class="filter-title">PO 批次</div>
+      <div id="filterPO"></div>
+    </div>
+    <div class="filter-divider"></div>
+    <div class="filter-group">
+      <div class="filter-title">基地</div>
+      <div id="filterBase"></div>
+    </div>
+    <div class="filter-divider"></div>
+    <div class="filter-group">
+      <div class="filter-title">产品阶段（有数据）</div>
+      <div id="filterStage"></div>
+    </div>
+    <div class="filter-divider"></div>
+    <div class="filter-group">
+      <div class="filter-title">运输方式</div>
+      <div id="filterMode"></div>
+    </div>
+    <div class="filter-divider"></div>
+    <div class="filter-group">
+      <div class="filter-title">运输状态</div>
+      <div id="filterStatus"></div>
+    </div>
+    <div class="filter-divider"></div>
+    <div class="filter-group">
+      <div class="filter-title">视图</div>
+      <label class="risk-toggle"><input type="checkbox" id="riskOnly"> 仅看风险项</label>
+      <div class="filter-clear" id="clearFilters" style="margin-top:10px;">清空全部筛选</div>
+    </div>
+  </div>
+
+  <!-- 中间表格 -->
+  <div class="table-panel">
+    <div class="table-header">
+      <div style="display:flex;align-items:center;gap:12px;min-width:0">
+        <span class="title" id="panelTitle">基地任务明细 · 可编辑</span>
+        <div class="tabs">
+          <button class="tab-btn active" data-view="table">基地任务明细</button>
+          <button class="tab-btn" data-view="timeline">周计划时间轴</button>
+        </div>
+      </div>
+      <span class="total" id="tableTotal">共 0 条</span>
+    </div>
+    <div class="table-wrapper" id="tableView">
+      <table>
+        <thead>
+          <tr>
+            <th data-sort="poId">PO 单号 <span class="sort-icon">↕</span></th>
+            <th data-sort="baseName">基地 <span class="sort-icon">↕</span></th>
+            <th class="no-sort">产品阶段</th>
+            <th class="no-sort">电芯 库存/在制</th>
+            <th class="no-sort">M/P 库存/在制</th>
+            <th class="no-sort">翻包量</th>
+            <th data-sort="progress">整体进度 <span class="sort-icon">↕</span></th>
+            <th data-sort="shipStatus">运输状态 <span class="sort-icon">↕</span></th>
+            <th class="no-sort">物流动态 · 发运/到港</th>
+            <th data-sort="risk">任务风险 <span class="sort-icon">↕</span></th>
+            <th class="no-sort">操作</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+    <div class="tl-view hidden" id="timelineView">
+      <div class="tl-scroll">
+        <table class="tl-table">
+          <thead id="tlHead"></thead>
+          <tbody id="tlBody"></tbody>
+          <tfoot id="tlFoot"></tfoot>
+        </table>
+      </div>
+      <div class="tl-legend">
+        <div class="tl-legend-main">
+          <span class="lg" title="每个基地的生产任务占一行，每段航运占一行">
+            <b>行</b> 1 基地 1 行 · 1 航段 1 行</span>
+          <span class="lg" title="生产：基地简称·产出物。运输：始发地→到港地·运输周期编码，S=海运 T=火车 C=汽运，数字为周期周数">
+            <b>阶段</b> <i class="lg-dim">宁德·电芯</i> ｜ <i class="lg-dim">上海港→鹿特丹·S10</i>
+            <i class="lg-dim">S船 T铁 C车</i></span>
+          <span class="lg" title="W-1 与各风险标记的配色：达成率 ≥95% 绿 · ≥60% 黄 · <60% 红">
+            <b>色</b> <i class="lg-dot g"></i>≥95% <i class="lg-dot y"></i>≥60% <i class="lg-dot r"></i>&lt;60%</span>
+          <span class="lg" title="当前周生产横道：灰底=计划，绿色=已达成">
+            <b>本周</b> <i class="lg-bar"><i></i></i> <i class="lg-dim">灰=计划 · 绿=达成</i></span>
+          <span class="lg" title="未来周：生产为虚线框，框内可直接填写该周计划；运输为一条单短线，覆盖 ETD→ETA 的每一周">
+            <b>未来</b> <i class="lg-box"></i> ｜ <i class="lg-line"></i> <i class="lg-dim">ETD→ETA</i></span>
+        </div>
+        <div class="tl-legal">© 2026 · Tracking · GJG</div>
+      </div>
+    </div>
+    <div class="pagination" id="paginationBar">
+      <div class="page-info">第 <span id="pageNow">1</span> / <span id="pageTotal">1</span> 页 · 每页
+        <select id="pageSize"><option value="10">10</option><option value="20">20</option><option value="50">50</option></select>
+      </div>
+      <div class="pager">
+        <button class="page-btn" id="prevPage">上一页</button>
+        <button class="page-btn" id="nextPage">下一页</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 右侧详情 -->
+  <div class="detail-panel collapsed" id="detailPanel">
+    <div class="detail-header">
+      <div><h3 id="detailTitle">基地任务详情</h3><div class="sub" id="detailSub">--</div></div>
+      <button class="close-detail" id="closeDetail">✕</button>
+    </div>
+    <div class="detail-body" id="detailBody"></div>
+    <div class="detail-footer" id="detailFooter">数据更新时间：--:--:--</div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+ *  1. 元数据
+ * ============================================================ */
+const BASE_META = {
+  ND:  { name:'宁德基地',        type:'cn', tag:'灯塔工厂',     stage:'cell',   desc:'湖东 / 湖西 / 蕉城 / 福鼎 / Z' },
+  YB:  { name:'宜宾基地',        type:'cn', tag:'零碳工厂',     stage:'cell',   desc:'动力电池零碳工厂' },
+  LY:  { name:'溧阳基地',        type:'cn', tag:'灯塔工厂',     stage:'mp',     desc:'长三角 M/P 制造中心' },
+  XN:  { name:'西宁基地',        type:'cn', tag:'',             stage:'cell',   desc:'西北电芯基地' },
+  ZQ:  { name:'肇庆基地',        type:'cn', tag:'零碳工厂',     stage:'cell',   desc:'华南电芯基地' },
+  XM:  { name:'厦门基地',        type:'cn', tag:'',             stage:'mp',     desc:'海西 M/P 基地' },
+  SH:  { name:'上海临港',        type:'cn', tag:'',             stage:'mp',     desc:'临港 M/P 基地' },
+  YC:  { name:'宜春基地',        type:'cn', tag:'',             stage:'cell',   desc:'赣西电芯基地' },
+  GY:  { name:'贵阳基地',        type:'cn', tag:'零碳工厂',     stage:'cell',   desc:'西南电芯基地' },
+  JN:  { name:'济宁基地',        type:'cn', tag:'',             stage:'cell',   desc:'鲁南电芯基地' },
+  LOY: { name:'洛阳基地',        type:'cn', tag:'',             stage:'cell',   desc:'中原电芯基地' },
+  DE:  { name:'德国图林根',      type:'ov', tag:'首个海外基地', stage:'mp',     desc:'14 GWh · 2022 投产 · 已盈利' },
+  HU:  { name:'匈牙利德布勒森',  type:'ov', tag:'模组量产',     stage:'repack', desc:'规划 100 GWh · 电芯试生产' },
+  ES:  { name:'西班牙萨拉戈萨',  type:'ov', tag:'合资工厂',     stage:'ship',   desc:'Stellantis 合资 · 2026 年底投产' },
+  ID:  { name:'印尼基地',        type:'ov', tag:'镍资源',       stage:'cell',   desc:'镍资源 + 电池产业链' }
+};
+const HUB_META = {
+  'HUB-SHA':{ name:'上海港' }, 'HUB-RTM':{ name:'鹿特丹港' }, 'HUB-LAX':{ name:'洛杉矶港' },
+  'HUB-GZ':{ name:'广州港' },  'HUB-SIN':{ name:'新加坡港' }, 'HUB-SYD':{ name:'悉尼港' },
+  'HUB-JED':{ name:'吉达港' }
+};
+const CUST_META = {
+  'EU-CUST':{ name:'欧洲客户' },  'US-CUST':{ name:'北美客户' }, 'CN-CUST':{ name:'国内客户' },
+  'SEA-CUST':{ name:'东南亚客户' }, 'AU-CUST':{ name:'澳洲客户' }, 'ME-CUST':{ name:'中东客户' }
+};
+/* PN = 项目（一个项目一个 PN），PN 下按交付批次/窗口拆多个 PO */
+const PN_META = {
+  'PN-ESS-EU-01':  { name:'欧洲储能项目',       region:'欧洲',       customer:'EU-CUST',  type:'储能系统' },
+  'PN-POW-EU-02':  { name:'欧洲动力项目群',     region:'欧洲',       customer:'EU-CUST',  type:'动力电池' },
+  'PN-NA-03':      { name:'北美项目群',         region:'北美',       customer:'US-CUST',  type:'动力 + 储能' },
+  'PN-APAC-ME-04': { name:'亚太中东项目群',     region:'亚太 / 中东', customer:'多区域',  type:'储能系统' },
+  'PN-CN-05':      { name:'国内储能项目',       region:'国内',       customer:'CN-CUST',  type:'储能系统' }
+};
+function nodeName(id){
+  return (BASE_META[id] && BASE_META[id].name) || (HUB_META[id] && HUB_META[id].name) ||
+         (CUST_META[id] && CUST_META[id].name) || id;
+}
+function isHub(id){ return !!HUB_META[id]; }
+function isCust(id){ return !!CUST_META[id]; }
+
+const STAGE_LABEL = { cell:'电芯', mp:'M/P', repack:'翻包' };
+const MODE_CLASS = { '汽运':'truck', '火车':'train', '海运':'ship' };
+const SHIP_CLASS = { '未发货':'wait', '在途':'transit', '已签收':'arrived', '已完成':'done' };
+
+/* ============================================================
+ *  2. PN → PO 数据（含交付截止周、航线发运量/发运周、海外组装链路）
+ * ============================================================ */
+const RAW_POS = [
+  /* ---- PN-ESS-EU-01 欧洲储能项目 ---- */
+  { id:'PO-2024-001', pn:'PN-ESS-EU-01', name:'欧洲储能 · 首批', type:'储能系统', customer:'EU-CUST',
+    window:'2026 Q4', dueWeek:'2026-W52', region:'欧洲',
+    kpi:{ plan:1200, wip:680, done:520 },
+    tasks:[
+      { id:'T001', base:'ND', cellStock:200, cellWip:500, mpStock:0,   mpWip:100, repack:0,  status:'生产中', progress:65 },
+      { id:'T002', base:'YB', cellStock:0,   cellWip:300, mpStock:150, mpWip:0,   repack:30, status:'生产中', progress:55 },
+      { id:'T003', base:'HU', cellStock:0,   cellWip:0,   mpStock:0,   mpWip:80,  repack:50, status:'生产中', progress:40, cellArrived:160, mpDemand:200 },
+      { id:'T004', base:'DE', cellStock:0,   cellWip:0,   mpStock:120, mpWip:0,   repack:0,  status:'已完成', progress:100, cellArrived:260, mpDemand:260 }
+    ],
+    routes:[
+      { from:'ND', to:'HUB-SHA', mode:'汽运', weeks:1,  qty:400, departWeek:'2026-W44', mat:'cell' },
+      { from:'YB', to:'HUB-SHA', mode:'火车', weeks:2,  qty:120, departWeek:'2026-W45', mat:'cell' },
+      { from:'HUB-SHA', to:'HUB-RTM', mode:'海运', weeks:10, qty:380, departWeek:'2026-W47', mat:'cell' },
+      { from:'HUB-RTM', to:'EU-CUST', mode:'汽运', weeks:1,  qty:180, departWeek:'2026-W43', mat:'pack' },
+      { from:'HU', to:'HUB-RTM', mode:'汽运', weeks:1,  qty:60,  departWeek:'2026-W41', mat:'pack' },
+      { from:'DE', to:'EU-CUST', mode:'汽运', weeks:1,  qty:80,  departWeek:'2026-W43', mat:'pack' }
+    ] },
+  { id:'PO-2024-011', pn:'PN-ESS-EU-01', name:'欧洲储能 · 二批', type:'储能系统', customer:'EU-CUST',
+    window:'2027 Q1', dueWeek:'2027-W13', region:'欧洲',
+    kpi:{ plan:900, wip:300, done:120 },
+    tasks:[
+      { id:'T011', base:'ND', cellStock:120, cellWip:200, mpStock:0,  mpWip:0,  repack:0, status:'生产中', progress:22 },
+      { id:'T012', base:'DE', cellStock:0,   cellWip:0,   mpStock:40, mpWip:60, repack:0, status:'生产中', progress:25, cellArrived:90, mpDemand:200 }
+    ],
+    routes:[
+      { from:'ND', to:'HUB-SHA', mode:'汽运', weeks:1,  qty:200, departWeek:'2026-W46', mat:'cell' },
+      { from:'HUB-SHA', to:'HUB-RTM', mode:'海运', weeks:10, qty:0,   departWeek:'', mat:'cell' },
+      { from:'HUB-RTM', to:'EU-CUST', mode:'汽运', weeks:1,  qty:0,   departWeek:'', mat:'pack' },
+      { from:'DE', to:'EU-CUST', mode:'汽运', weeks:1,  qty:0,   departWeek:'', mat:'pack' }
+    ] },
+
+  /* ---- PN-POW-EU-02 欧洲动力项目群 ---- */
+  { id:'PO-2024-003', pn:'PN-POW-EU-02', name:'欧洲动力 · 德系纯电', type:'动力电池', customer:'EU-CUST',
+    window:'2027 Q1', dueWeek:'2027-W09', region:'欧洲',
+    kpi:{ plan:1600, wip:900, done:640 },
+    tasks:[
+      { id:'T201', base:'ND', cellStock:300, cellWip:620, mpStock:120, mpWip:0,  repack:0, status:'生产中', progress:65 },
+      { id:'T202', base:'XM', cellStock:0,   cellWip:0,   mpStock:180, mpWip:60, repack:0, status:'生产中', progress:45 },
+      { id:'T203', base:'LY', cellStock:60,  cellWip:320, mpStock:210, mpWip:90, repack:0, status:'生产中', progress:58 },
+      { id:'T204', base:'DE', cellStock:0,   cellWip:0,   mpStock:140, mpWip:40, repack:0, status:'生产中', progress:80, cellArrived:300, mpDemand:450 }
+    ],
+    routes:[
+      { from:'ND', to:'HUB-SHA', mode:'汽运', weeks:1,  qty:300, departWeek:'2026-W44', mat:'cell' },
+      { from:'LY', to:'HUB-SHA', mode:'汽运', weeks:1,  qty:220, departWeek:'2026-W44', mat:'cell' },
+      { from:'XM', to:'HUB-SHA', mode:'汽运', weeks:2,  qty:0,   departWeek:'', mat:'cell' },
+      { from:'HUB-SHA', to:'HUB-RTM', mode:'海运', weeks:10, qty:350, departWeek:'2026-W45', mat:'cell' },
+      { from:'HUB-RTM', to:'EU-CUST', mode:'汽运', weeks:1,  qty:150, departWeek:'2026-W45', mat:'pack' },
+      { from:'DE', to:'EU-CUST', mode:'汽运', weeks:1,  qty:120, departWeek:'2026-W44', mat:'pack' }
+    ] },
+  { id:'PO-2024-008', pn:'PN-POW-EU-02', name:'欧洲商用 · 匈牙利工厂', type:'商用车电池', customer:'EU-CUST',
+    window:'2026 Q4', dueWeek:'2026-W50', region:'欧洲',
+    kpi:{ plan:900, wip:480, done:320 },
+    tasks:[
+      { id:'T701', base:'HU', cellStock:0, cellWip:0, mpStock:120, mpWip:150, repack:60, status:'生产中', progress:68, cellArrived:400, mpDemand:420 },
+      { id:'T702', base:'DE', cellStock:0, cellWip:0, mpStock:80,  mpWip:40,  repack:0,  status:'生产中', progress:72, cellArrived:320, mpDemand:320 },
+      { id:'T703', base:'ES', cellStock:0, cellWip:0, mpStock:0,   mpWip:0,   repack:40, status:'待生产', progress:25, cellArrived:60,  mpDemand:150 }
+    ],
+    routes:[
+      { from:'HU', to:'HUB-RTM', mode:'汽运', weeks:1, qty:180, departWeek:'2026-W44', mat:'pack' },
+      { from:'DE', to:'EU-CUST', mode:'汽运', weeks:1, qty:100, departWeek:'2026-W44', mat:'pack' },
+      { from:'ES', to:'HUB-RTM', mode:'汽运', weeks:2, qty:0,   departWeek:'', mat:'pack' },
+      { from:'ES', to:'EU-CUST', mode:'汽运', weeks:2, qty:0,   departWeek:'', mat:'pack' }
+    ] },
+  { id:'PO-2024-010', pn:'PN-POW-EU-02', name:'欧洲两轮车 · 德国', type:'两轮车电池', customer:'EU-CUST',
+    window:'2027 Q2', dueWeek:'2027-W22', region:'欧洲',
+    kpi:{ plan:1000, wip:560, done:400 },
+    tasks:[
+      { id:'T901', base:'ND', cellStock:0, cellWip:380, mpStock:0,   mpWip:0,  repack:0,  status:'生产中', progress:60 },
+      { id:'T902', base:'YC', cellStock:0, cellWip:200, mpStock:0,   mpWip:0,  repack:0,  status:'生产中', progress:44 },
+      { id:'T903', base:'DE', cellStock:0, cellWip:0,   mpStock:160, mpWip:60, repack:0,  status:'生产中', progress:76, cellArrived:300, mpDemand:300 },
+      { id:'T904', base:'HU', cellStock:0, cellWip:0,   mpStock:0,   mpWip:0,  repack:40, status:'待生产', progress:30, cellArrived:0,   mpDemand:120 }
+    ],
+    routes:[
+      { from:'ND', to:'HUB-SHA', mode:'汽运', weeks:1,  qty:150, departWeek:'2026-W44', mat:'cell' },
+      { from:'YC', to:'HUB-SHA', mode:'火车', weeks:2,  qty:0,   departWeek:'', mat:'cell' },
+      { from:'HUB-SHA', to:'HUB-RTM', mode:'海运', weeks:10, qty:120, departWeek:'2026-W45', mat:'cell' },
+      { from:'HUB-RTM', to:'EU-CUST', mode:'汽运', weeks:1,  qty:90,  departWeek:'2026-W45', mat:'pack' },
+      { from:'DE', to:'EU-CUST', mode:'汽运', weeks:1,  qty:90,  departWeek:'2026-W44', mat:'pack' }
+    ] },
+
+  /* ---- PN-NA-03 北美项目群 ---- */
+  { id:'PO-2024-002', pn:'PN-NA-03', name:'北美动力项目', type:'动力电池', customer:'US-CUST',
+    window:'2026 Q4', dueWeek:'2026-W48', region:'北美',
+    kpi:{ plan:800, wip:300, done:200 },
+    tasks:[
+      { id:'T101', base:'LY', cellStock:100, cellWip:200, mpStock:80, mpWip:50, repack:20, status:'生产中', progress:45 },
+      { id:'T102', base:'XM', cellStock:50,  cellWip:150, mpStock:0,  mpWip:0,  repack:0,  status:'待生产', progress:10 }
+    ],
+    routes:[
+      { from:'LY', to:'HUB-SHA', mode:'汽运', weeks:1, qty:150, departWeek:'2026-W43', mat:'cell' },
+      { from:'HUB-SHA', to:'HUB-LAX', mode:'海运', weeks:6, qty:260, departWeek:'2026-W44', mat:'cell' },
+      { from:'HUB-LAX', to:'US-CUST', mode:'汽运', weeks:2, qty:260, departWeek:'2026-W51', mat:'pack' },
+      { from:'XM', to:'HUB-LAX', mode:'海运', weeks:7, qty:0,   departWeek:'', mat:'cell' }
+    ] },
+  { id:'PO-2024-009', pn:'PN-NA-03', name:'北美储能 · 德州', type:'储能系统', customer:'US-CUST',
+    window:'2027 Q1', dueWeek:'2027-W13', region:'北美',
+    kpi:{ plan:1200, wip:520, done:360 },
+    tasks:[
+      { id:'T801', base:'LY', cellStock:120, cellWip:300, mpStock:60,  mpWip:0,  repack:0, status:'生产中', progress:52 },
+      { id:'T802', base:'SH', cellStock:0,   cellWip:0,   mpStock:150, mpWip:50, repack:0, status:'生产中', progress:46 },
+      { id:'T803', base:'YC', cellStock:60,  cellWip:120, mpStock:0,   mpWip:0,  repack:0, status:'待生产', progress:33 }
+    ],
+    routes:[
+      { from:'LY', to:'HUB-SHA', mode:'汽运', weeks:1, qty:160, departWeek:'2026-W44', mat:'cell' },
+      { from:'YC', to:'HUB-SHA', mode:'火车', weeks:2, qty:0,   departWeek:'', mat:'cell' },
+      { from:'SH', to:'HUB-LAX', mode:'海运', weeks:5, qty:140, departWeek:'2026-W43', mat:'pack' },
+      { from:'HUB-SHA', to:'HUB-LAX', mode:'海运', weeks:6, qty:0,   departWeek:'', mat:'cell' },
+      { from:'HUB-LAX', to:'US-CUST', mode:'汽运', weeks:2, qty:0,   departWeek:'', mat:'pack' }
+    ] },
+
+  /* ---- PN-APAC-ME-04 亚太中东项目群 ---- */
+  { id:'PO-2024-004', pn:'PN-APAC-ME-04', name:'东南亚储能 · 印尼', type:'储能系统', customer:'SEA-CUST',
+    window:'2026 Q4', dueWeek:'2026-W49', region:'东南亚',
+    kpi:{ plan:600, wip:260, done:180 },
+    tasks:[
+      { id:'T301', base:'ZQ', cellStock:80, cellWip:180, mpStock:40, mpWip:20, repack:0,  status:'生产中', progress:62 },
+      { id:'T302', base:'ID', cellStock:0,  cellWip:120, mpStock:40, mpWip:30, repack:20, status:'生产中', progress:38, cellArrived:150, mpDemand:220 },
+      { id:'T303', base:'ND', cellStock:60, cellWip:0,   mpStock:0,  mpWip:0,  repack:0,  status:'待生产', progress:12 }
+    ],
+    routes:[
+      { from:'ZQ', to:'HUB-GZ', mode:'汽运', weeks:1, qty:150, departWeek:'2026-W44', mat:'cell' },
+      { from:'ND', to:'HUB-GZ', mode:'汽运', weeks:1, qty:60,  departWeek:'2026-W45', mat:'cell' },
+      { from:'HUB-GZ', to:'HUB-SIN', mode:'海运', weeks:1, qty:180, departWeek:'2026-W46', mat:'cell' },
+      { from:'HUB-SIN', to:'SEA-CUST', mode:'汽运', weeks:1, qty:0, departWeek:'', mat:'pack' },
+      { from:'ID', to:'SEA-CUST', mode:'汽运', weeks:1, qty:90, departWeek:'2026-W44', mat:'pack' }
+    ] },
+  { id:'PO-2024-006', pn:'PN-APAC-ME-04', name:'澳洲储能 · 悉尼', type:'储能系统', customer:'AU-CUST',
+    window:'2027 Q1', dueWeek:'2027-W06', region:'澳洲',
+    kpi:{ plan:1500, wip:700, done:300 },
+    tasks:[
+      { id:'T501', base:'ND', cellStock:0, cellWip:500, mpStock:80, mpWip:0,  repack:0,  status:'生产中', progress:55 },
+      { id:'T502', base:'ZQ', cellStock:0, cellWip:200, mpStock:60, mpWip:0,  repack:0,  status:'生产中', progress:40 },
+      { id:'T503', base:'LY', cellStock:0, cellWip:0,   mpStock:120, mpWip:40, repack:30, status:'生产中', progress:35 }
+    ],
+    routes:[
+      { from:'ND', to:'HUB-SHA', mode:'汽运', weeks:1, qty:200, departWeek:'2026-W45', mat:'cell' },
+      { from:'ZQ', to:'HUB-GZ', mode:'汽运', weeks:1, qty:100, departWeek:'2026-W44', mat:'cell' },
+      { from:'HUB-SHA', to:'HUB-SYD', mode:'海运', weeks:3, qty:180, departWeek:'2026-W46', mat:'cell' },
+      { from:'HUB-GZ', to:'HUB-SYD', mode:'海运', weeks:4, qty:90,  departWeek:'2026-W45', mat:'cell' },
+      { from:'HUB-SYD', to:'AU-CUST', mode:'汽运', weeks:1, qty:0, departWeek:'', mat:'pack' }
+    ] },
+  { id:'PO-2024-007', pn:'PN-APAC-ME-04', name:'中东储能 · 沙特', type:'储能系统', customer:'ME-CUST',
+    window:'2027 Q1', dueWeek:'2027-W10', region:'中东',
+    kpi:{ plan:700, wip:330, done:210 },
+    tasks:[
+      { id:'T601', base:'XN', cellStock:100, cellWip:180, mpStock:0, mpWip:0,  repack:0, status:'生产中', progress:50 },
+      { id:'T602', base:'ND', cellStock:0,   cellWip:150, mpStock:0, mpWip:0,  repack:0, status:'生产中', progress:45 },
+      { id:'T603', base:'LOY', cellStock:40, cellWip:60, mpStock:0, mpWip:0,  repack:0, status:'待生产', progress:30 },
+      { id:'T604', base:'GY', cellStock:60,  cellWip:90, mpStock:0, mpWip:0,  repack:0, status:'待生产', progress:25 }
+    ],
+    routes:[
+      { from:'ND', to:'HUB-GZ', mode:'汽运', weeks:1, qty:80,  departWeek:'2026-W45', mat:'cell' },
+      { from:'GY', to:'HUB-GZ', mode:'汽运', weeks:1, qty:60,  departWeek:'2026-W44', mat:'cell' },
+      { from:'HUB-GZ', to:'HUB-JED', mode:'海运', weeks:4, qty:130, departWeek:'2026-W46', mat:'cell' },
+      { from:'XN', to:'HUB-SHA', mode:'火车', weeks:3, qty:0,   departWeek:'', mat:'cell' },
+      { from:'HUB-SHA', to:'HUB-JED', mode:'海运', weeks:3, qty:0,   departWeek:'', mat:'cell' },
+      { from:'HUB-JED', to:'ME-CUST', mode:'汽运', weeks:1, qty:0,   departWeek:'', mat:'pack' }
+    ] },
+
+  /* ---- PN-CN-05 国内储能项目 ---- */
+  { id:'PO-2024-005', pn:'PN-CN-05', name:'国内储能 · 华东电网', type:'储能系统', customer:'CN-CUST',
+    window:'2026 Q4', dueWeek:'2026-W46', region:'国内',
+    kpi:{ plan:900, wip:420, done:380 },
+    tasks:[
+      { id:'T401', base:'YB', cellStock:120, cellWip:200, mpStock:0,   mpWip:0,  repack:0, status:'生产中', progress:52 },
+      { id:'T402', base:'JN', cellStock:90,  cellWip:150, mpStock:0,   mpWip:60, repack:0, status:'生产中', progress:48 },
+      { id:'T403', base:'SH', cellStock:0,   cellWip:0,   mpStock:120, mpWip:0,  repack:0, status:'生产中', progress:70 }
+    ],
+    routes:[
+      { from:'YB', to:'HUB-SHA', mode:'火车', weeks:2, qty:150, departWeek:'2026-W44', mat:'cell' },
+      { from:'JN', to:'HUB-SHA', mode:'汽运', weeks:1, qty:120, departWeek:'2026-W44', mat:'cell' },
+      { from:'SH', to:'CN-CUST', mode:'汽运', weeks:1, qty:180, departWeek:'2026-W43', mat:'pack' }
+    ] }
+];
+
+/* ============================================================
+ *  3. 周计算工具
+ * ============================================================ */
+function pad2(n){ return n < 10 ? '0' + n : '' + n; }
+function hhmmss(d){ return pad2(d.getHours()) + ':' + pad2(d.getMinutes()) + ':' + pad2(d.getSeconds()); }
+function fmt(n){ return (n || 0).toLocaleString('en-US'); }
+function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function clone(o){ return JSON.parse(JSON.stringify(o)); }
+const WK_RE = /^\d{4}-W\d{2}$/;
+
+function isoWeekOf(d){
+  const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const day = t.getUTCDay() || 7;
+  t.setUTCDate(t.getUTCDate() + 4 - day);
+  const yearStart = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+  const wk = Math.ceil((((t - yearStart) / 86400000) + 1) / 7);
+  return t.getUTCFullYear() + '-W' + (wk < 10 ? '0' + wk : '' + wk);
+}
+function currentWeek(){ return isoWeekOf(new Date()); }
+/* 某 ISO 周的周一 */
+function weekAnchorMonday(y, wk){
+  const jan4 = new Date(Date.UTC(y, 0, 4));
+  const dow = jan4.getUTCDay() || 7;
+  return new Date(jan4.getTime() - (dow - 1) * 86400000 + (wk - 1) * 7 * 86400000);
+}
+/* 周偏移：weekAdd('2026-W45', 3) → '2026-W48' */
+function weekAdd(w, n){
+  if (!WK_RE.test(w)) return w;
+  const y = parseInt(w.slice(0, 4), 10), k = parseInt(w.slice(6), 10);
+  const t = new Date(weekAnchorMonday(y, k).getTime() + n * 7 * 86400000);
+  const dow = t.getUTCDay() || 7;
+  const thu = new Date(t.getTime() + (4 - dow) * 86400000);
+  const ys = new Date(Date.UTC(thu.getUTCFullYear(), 0, 1));
+  const wk2 = Math.ceil((((thu - ys) / 86400000) + 1) / 7);
+  return thu.getUTCFullYear() + '-W' + (wk2 < 10 ? '0' + wk2 : '' + wk2);
+}
+/* b - a 的周数 */
+function weekDiff(a, b){
+  if (!WK_RE.test(a) || !WK_RE.test(b)) return 0;
+  const ta = weekAnchorMonday(parseInt(a.slice(0, 4), 10), parseInt(a.slice(6), 10));
+  const tb = weekAnchorMonday(parseInt(b.slice(0, 4), 10), parseInt(b.slice(6), 10));
+  return Math.round((tb - ta) / (7 * 86400000));
+}
+function shortWeek(w){ return WK_RE.test(w) ? 'W' + w.slice(6) : w; }
+function weekLabel(w, base){ return w.slice(0, 4) === base.slice(0, 4) ? shortWeek(w) : w; }
+
+/* ============================================================
+ *  4. 草稿模型 / 本地持久化（v4）
+ * ============================================================ */
+const LS_KEY = 'catl-data-draft-v5';
+
+function deriveShip(t){
+  if (t.progress >= 100) return '已签收';
+  if ((t.repack || 0) > 0) return '在途';
+  return '未发货';
+}
+function snapTask(t, week){
+  return { week:week, progress:t.progress, shipStatus:t.shipStatus,
+    cellStock:t.cellStock, cellWip:t.cellWip, mpStock:t.mpStock, mpWip:t.mpWip, repack:t.repack || 0 };
+}
+function snapKpi(po, week, act){
+  return { week:week, plan:po.kpi.plan, wip:po.kpi.wip, done:po.kpi.done, act: act || 0 };
+}
+function planOf(po, w){ const x = (po.planWeekly || []).find(k => k.week === w); return x ? x.plan : null; }
+function actOf(po, w){ const x = po.kpiWeekly.find(k => k.week === w); return x && x.act != null ? x.act : null; }
+/* 单个 PO 的历史累计计划 / 实际，用于 GAP 汇总 */
+function poGap(po){
+  let p = 0, a = 0, has = false;
+  (po.kpiWeekly || []).forEach(k => {
+    const pl = planOf(po, k.week);
+    if (pl != null) p += pl;
+    if (k.act != null) { a += k.act; has = true; }
+  });
+  return { p, a, gap: p ? a - p : null, rate: p ? Math.round(a / p * 100) : null, has };
+}
+function setPlanOf(po, w, v){
+  let x = (po.planWeekly || []).find(k => k.week === w);
+  if (!x) { x = { week:w, plan:v }; po.planWeekly.push(x); }
+  x.plan = v;
+}
+/* ---- 任务级计划/达成：PO 周计划按任务在制+库存权重分摊到每个任务行，任务行可单独覆盖 ---- */
+function taskWeight(t){
+  return Math.max(1, (t.cellWip || 0) + (t.mpWip || 0) + (t.repack || 0) +
+    0.5 * ((t.cellStock || 0) + (t.mpStock || 0)));
+}
+function taskShare(po, t, total){ const arr = taskShares(po, total); return arr ? arr[po.tasks.indexOf(t)] : null; }
+/* 按权重把 PO 周计划拆到各任务，取整后用最大余数法补齐，保证各任务之和恒等于 PO 周计划 */
+function taskShares(po, total){
+  if (total == null) return null;
+  const ws = po.tasks.map(taskWeight);
+  const sum = ws.reduce((a, b) => a + b, 0) || 1;
+  const raw = ws.map(x => total * x / sum);
+  const base = raw.map(x => Math.floor(x));
+  let rest = Math.round(total - base.reduce((a, b) => a + b, 0));
+  const order = raw.map((x, i) => ({ i, frac: x - base[i] })).sort((a, b) => b.frac - a.frac);
+  for (let k = 0; k < rest && order.length; k++) base[order[k % order.length].i]++;
+  return base;
+}
+function taskPlanOf(po, t, w){
+  const own = (t.planWeekly || []).find(k => k.week === w);
+  if (own) return own.plan;
+  return taskShare(po, t, planOf(po, w));
+}
+function taskActOf(po, t, w){ return taskShare(po, t, actOf(po, w)); }
+/* 改某任务某周计划：先把该周所有任务的值固化，再改目标行，最后把 PO 周计划对齐为任务合计 */
+function setTaskPlanOf(po, t, w, v){
+  po.tasks.forEach(x => {
+    x.planWeekly = x.planWeekly || [];
+    if (!x.planWeekly.find(k => k.week === w)) {
+      const cur = taskPlanOf(po, x, w);
+      x.planWeekly.push({ week:w, plan: cur == null ? 0 : cur });
+    }
+  });
+  const rec = t.planWeekly.find(k => k.week === w);
+  const old = rec.plan;
+  rec.plan = v;
+  const total = po.tasks.reduce((s, x) => {
+    const r = (x.planWeekly || []).find(k => k.week === w);
+    return s + (r ? r.plan : 0);
+  }, 0);
+  setPlanOf(po, w, total);
+  return old;
+}
+function prevWeeklyRec(recs){
+  for (let i = (recs || []).length - 1; i >= 0; i--) if (recs[i].week < draft.week) return recs[i];
+  return null;
+}
+function syncWeekSnap(t){
+  const cur = t.weekly[t.weekly.length - 1];
+  if (cur && cur.week === draft.week) Object.assign(cur, snapTask(t, draft.week));
+  else t.weekly.push(snapTask(t, draft.week));
+}
+/* 自动换周 */
+function ensureWeekRollover(){
+  const wk = currentWeek();
+  if (draft.week === wk) return false;
+  draft.pos.forEach(po => {
+    po.tasks.forEach(t => { t.weekly.push(snapTask(t, wk)); });
+    po.kpiWeekly.push(snapKpi(po, wk, 0));
+    po.planWeekly = po.planWeekly || [];
+    for (let i = 0; i <= 7; i++) {
+      const w = weekAdd(wk, i);
+      if (!po.planWeekly.find(x => x.week === w)) {
+        const last = po.planWeekly[po.planWeekly.length - 1];
+        po.planWeekly.push({ week:w, plan: last ? last.plan : Math.round((po.kpi.plan - po.kpi.done) / 8) });
+      }
+    }
+  });
+  draft.week = wk;
+  return true;
+}
+
+function buildInitialDraft(){
+  const pos = clone(RAW_POS);
+  const wk = currentWeek();
+  const actFactor = [0.92, 1.02, 0.88, 1.06, 0.95, 1.08, 0.86, 0.72];   /* W-7 → W0 的周产出系数（本周未收口，偏低） */
+  const planFactor = [0.96, 1.0, 1.04, 0.95, 1.02, 0.98, 1.05, 1.0];
+  const HIST = 8;                                  /* 历史周数：W-7 → W0 */
+  pos.forEach(po => {
+    po.tasks.forEach(t => { t.shipStatus = deriveShip(t); });
+    /* --- KPI 周序列（含本周已实现产出 act） --- */
+    const base = Math.max(1, Math.round(po.kpi.done / 7.49));
+    /* 每个 PO 加一点确定性扰动，避免各范围曲线完全一致 */
+    const jit = i => 0.9 + (((po.kpi.plan * 7 + i * 13) % 19) / 19) * 0.22;
+    let acts = actFactor.map((f, i) => Math.max(1, Math.round(base * f * jit(i))));
+    const sumAct = acts.reduce((a, b) => a + b, 0);
+    if (sumAct > po.kpi.done) acts = acts.map(a => Math.max(1, Math.round(a * po.kpi.done / sumAct * 0.97)));
+    const doneAt = new Array(HIST);
+    doneAt[HIST - 1] = po.kpi.done;
+    for (let i = HIST - 2; i >= 0; i--) doneAt[i] = Math.max(0, doneAt[i + 1] - acts[i + 1]);
+    po.kpiWeekly = [];
+    for (let i = 0; i < HIST; i++) {
+      const w = weekAdd(wk, i - (HIST - 1));
+      po.kpiWeekly.push({ week:w, plan:po.kpi.plan, wip:po.kpi.wip, done:doneAt[i], act:acts[i] });
+    }
+    /* --- 周计划：过去 7 周 + 本周 + 未来 7 周 --- */
+    const remaining = Math.max(0, po.kpi.plan - po.kpi.done);
+    const perWeek = Math.max(1, Math.round(remaining / 8));
+    po.planWeekly = [];
+    for (let i = -(HIST - 1); i <= 7; i++) {
+      const w = weekAdd(wk, i);
+      const plan = i <= 0 ? Math.max(1, Math.round(base * planFactor[i + HIST - 1])) : perWeek;
+      po.planWeekly.push({ week:w, plan });
+    }
+    /* --- 任务周快照：过去 7 周 + 本周 --- */
+    po.tasks.forEach(t => {
+      const arr = [];
+      for (let i = -(HIST - 1); i <= 0; i++) {
+        const pr = i === 0 ? t.progress : Math.max(0, Math.min(100, t.progress - (0 - i) * 7));
+        const r = t.progress > 0 ? pr / t.progress : 0;
+        arr.push({ week: weekAdd(wk, i), progress: pr, shipStatus: t.shipStatus,
+          cellStock: Math.round(t.cellStock * r), cellWip: Math.round(t.cellWip * r),
+          mpStock: Math.round(t.mpStock * r), mpWip: Math.round(t.mpWip * r),
+          repack: Math.round((t.repack || 0) * r) });
+      }
+      arr[arr.length - 1] = snapTask(t, wk);
+      t.weekly = arr;
+    });
+  });
+  const routeStatus = {};
+  pos.forEach(po => po.routes.forEach((r, i) => {
+    routeStatus[po.id + '#' + i] = (po.id === 'PO-2024-002' && i === 1) ? '延误' : '正常';
+  }));
+  return { version:5, week:wk, updatedAt:Date.now(), pos, routeStatus };
+}
+
+function loadDraft(){
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return null;
+    const d = JSON.parse(raw);
+    if (!d || d.version !== 5 || !Array.isArray(d.pos) || d.pos.length !== RAW_POS.length) return null;
+    d.routeStatus = d.routeStatus || {};
+    d.week = d.week || currentWeek();
+    return d;
+  } catch (e) { return null; }
+}
+
+let draft = loadDraft() || buildInitialDraft();
+let saveTimer = null;
+
+function saveDraft(){
+  draft.updatedAt = Date.now();
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    try { localStorage.setItem(LS_KEY, JSON.stringify(draft)); }
+    catch (e) { /* 本地存储不可用时静默降级 */ }
+  }, 320);
+}
+
+/* ============================================================
+ *  5. 状态与工具
+ * ============================================================ */
+const state = {
+  currentPN: 'ALL', currentPO: 'ALL',
+  view: 'table', search: '',
+  filters: { po:[], base:[], stage:[], mode:[], status:[] },
+  riskOnly: false,
+  sortKey: 'poId', sortDir: 'asc',
+  page: 1, pageSize: 10,
+  selected: { poId:null, taskId:null }
+};
+
+function getPO(poId){ return draft.pos.find(p => p.id === poId); }
+function scopePOs(){
+  let r = draft.pos;
+  if (state.currentPN !== 'ALL') r = r.filter(p => p.pn === state.currentPN);
+  if (state.currentPO !== 'ALL') r = r.filter(p => p.id === state.currentPO);
+  return r;
+}
+function scopeLabel(){
+  if (state.currentPO !== 'ALL') { const p = getPO(state.currentPO); return p ? p.id + ' · ' + p.name : state.currentPO; }
+  if (state.currentPN !== 'ALL') { const m = PN_META[state.currentPN]; return m ? m.name : state.currentPN; }
+  return '全部 ' + Object.keys(PN_META).length + ' 个 PN · ' + draft.pos.length + ' 个 PO';
+}
+function routeStatusOf(po, idx){ return draft.routeStatus[po.id + '#' + idx] || '正常'; }
+function setRouteStatus(po, idx, v){ draft.routeStatus[po.id + '#' + idx] = v; }
+/* 航段预计到港周（延误 +1 周） */
+function routeEta(po, idx){
+  const r = po.routes[idx];
+  if (!r || !WK_RE.test(r.departWeek || '')) return null;
+  return weekAdd(r.departWeek, (Number(r.weeks) || 0) + (routeStatusOf(po, idx) === '延误' ? 1 : 0));
+}
+
+/* ============================================================
+ *  物料流：把航线按产出物（电芯 cell / 成品 pack）分成两条链，
+ *  链内按 ETD 排序编序号，回答「多段物流的先后顺序」与「哪段对应哪个到港」
+ * ============================================================ */
+const MAT_LABEL = { cell:'电芯', pack:'成品' };
+const SEQ = ['①','②','③','④','⑤','⑥','⑦','⑧'];
+function flowLegs(po){
+  const res = { cell:[], pack:[] };
+  po.routes.forEach((r, i) => {
+    if (!(r.qty > 0)) return;
+    const mat = r.mat === 'pack' ? 'pack' : 'cell';
+    res[mat].push({ ...r, idx:i, mat, etd:(r.departWeek || ''), eta:routeEta(po, i) });
+  });
+  Object.keys(res).forEach(m => res[m].sort((a, b) => (a.etd || '9999') < (b.etd || '9999') ? -1 : 1));
+  return res;
+}
+/* 航段状态（相对当前周）：wait 未发运 / transit 在途 / arrived 已到港 */
+function legState(l, cur){
+  if (!WK_RE.test(l.etd || '')) return 'wait';
+  if (weekDiff(cur, l.etd) > 0) return 'wait';                 /* ETD > cur：还没到发运周 */
+  if (l.eta && weekDiff(cur, l.eta) > 0) return 'transit';     /* ETD ≤ cur < ETA：在途 */
+  return 'arrived';
+}
+/* 航段到港是否晚于 PO 交付截止 */
+function legDueBad(po, l){
+  return WK_RE.test(po.dueWeek || '') && l.eta && weekDiff(po.dueWeek, l.eta) > 0;
+}
+/* 衔接：同物料下，上段（to == 本段 from）到港 vs 本段 ETD */
+function legHandoff(po, legs, leg){
+  let ok = null, conflict = null;
+  legs.forEach(i => {
+    if (i === leg || i.to !== leg.from || !WK_RE.test(i.etd || '')) return;
+    if (!i.eta) return;
+    if (weekDiff(i.eta, leg.etd || '') >= 0 || !WK_RE.test(leg.etd || '')) {
+      if (!ok || i.eta > ok.eta) ok = i;
+    } else if (weekDiff(i.eta, leg.etd) < 0) {
+      if (!conflict || i.eta > conflict.eta) conflict = i;
+    }
+  });
+  return { ok, conflict };
+}
+function hasStageData(t, stage){
+  if (stage === 'cell') return (t.cellStock + t.cellWip) > 0;
+  if (stage === 'mp') return (t.mpStock + t.mpWip) > 0;
+  return (t.repack || 0) > 0;
+}
+function taskRoutes(po, t){
+  return po.routes.map((r, i) => ({ ...r, idx:i }))
+    .filter(r => r.from === t.base || r.to === t.base);
+}
+
+/* ---------- 校验规则 ---------- */
+function poRisks(po){
+  const list = [];
+  const cur = draft.week;
+  if (po.kpi.plan <= 0) list.push({ level:'error', msg:'计划 BP 为 0，无法计算交付率' });
+  if (po.kpi.done > po.kpi.plan) list.push({ level:'error', msg:'完成 BP（' + fmt(po.kpi.done) + '）已超过计划（' + fmt(po.kpi.plan) + '）' });
+  else if (po.kpi.done + po.kpi.wip > po.kpi.plan) list.push({ level:'warn', msg:'进行中 + 完成（' + fmt(po.kpi.done + po.kpi.wip) + '）超过计划 BP，存在超发风险' });
+  if (!po.tasks.length) list.push({ level:'error', msg:'该 PO 没有拆解到任何基地任务' });
+
+  /* 交付窗口：剩余周数 */
+  if (WK_RE.test(po.dueWeek || '')) {
+    const left = weekDiff(cur, po.dueWeek);
+    if (left < 0) list.push({ level:'error', msg:'已超过交付截止 ' + po.dueWeek + '（逾期 ' + (-left) + ' 周）' });
+    else if (left <= 2) list.push({ level:'warn', msg:'距交付截止 ' + po.dueWeek + ' 仅剩 ' + left + ' 周' });
+  }
+
+  /* 本周计划达成率 */
+  const pl = planOf(po, cur), ac = actOf(po, cur);
+  if (pl > 0 && ac != null) {
+    const r = ac / pl;
+    if (r < 0.6) list.push({ level:'warn', msg:'本周计划达成率 ' + Math.round(r * 100) + '%（实际 ' + fmt(ac) + ' / 计划 ' + fmt(pl) + ' BP）' });
+  }
+
+  po.routes.forEach((r, i) => {
+    if (!BASE_META[r.from] && !isHub(r.from)) list.push({ level:'error', msg:'航线起点未识别：' + esc(r.from) });
+    if (!BASE_META[r.to] && !isHub(r.to) && !isCust(r.to)) list.push({ level:'error', msg:'航线终点未识别：' + esc(r.to) });
+    if (r.weeks <= 0) list.push({ level:'warn', msg:'航线 ' + nodeName(r.from) + ' → ' + nodeName(r.to) + ' 周数为 0' });
+    if (routeStatusOf(po, i) === '延误') list.push({ level:'error', msg:'运输段延误：' + nodeName(r.from) + ' → ' + nodeName(r.to) + '（' + r.mode + '）' });
+
+    const eta = routeEta(po, i);
+    if (eta && (r.qty || 0) > 0 && WK_RE.test(po.dueWeek || '')) {
+      const over = weekDiff(po.dueWeek, eta);         /* >0 表示到港晚于截止 */
+      const upcoming = weekDiff(cur, eta) >= 0;       /* 尚未到港才算风险 */
+      const final = isCust(r.to);                     /* 末段（到客户）= 交付违约；中间段 = 物料迟到预警 */
+      if (over > 0) list.push({
+        level: final ? 'error' : 'warn',
+        msg: (final ? '到港预计 ' : (r.mat === 'pack' ? '成品 ' : '电芯 ') + '到港 ') + eta + '，晚于交付截止 ' + po.dueWeek +
+          '（' + nodeName(r.from) + '→' + nodeName(r.to) + '，' + fmt(r.qty) + ' BP）'
+      });
+      else if (over <= 0 && -over <= 2 && upcoming && final) list.push({ level:'warn', msg:
+        (-over === 0 ? '与交付截止 ' + po.dueWeek + ' 同周到港，无缓冲' : '到港 ' + eta + ' 距交付截止仅 ' + (-over) + ' 周，无缓冲') +
+        '（' + nodeName(r.from) + '→' + nodeName(r.to) + '）' });
+    }
+  });
+
+  /* 物料衔接：同物料链内，下段 ETD 早于上段 ETA → 排产/订舱冲突 */
+  const flows = flowLegs(po);
+  ['cell', 'pack'].forEach(m => {
+    flows[m].forEach(j => {
+      if (!WK_RE.test(j.etd || '')) return;
+      const hf = legHandoff(po, flows[m], j);
+      if (hf.conflict) list.push({ level:'warn', msg:'物料衔接冲突：' + MAT_LABEL[m] + '链 ' +
+        nodeName(j.from) + '→' + nodeName(j.to) + ' ETD ' + j.etd +
+        '，早于上段 ' + nodeName(hf.conflict.from) + '→' + nodeName(hf.conflict.to) + ' 到港 ' + hf.conflict.eta });
+    });
+  });
+
+  const prevK = prevWeeklyRec(po.kpiWeekly);
+  if (prevK && po.kpi.done < prevK.done) list.push({ level:'warn', msg:'完成 BP 周环比下降：' + prevK.week + ' ' + fmt(prevK.done) + ' → ' + cur + ' ' + fmt(po.kpi.done) });
+  return list;
+}
+
+function taskRisks(po, t){
+  const list = [];
+  const bm = BASE_META[t.base] || {};
+  if (t.status === '已完成' && t.progress < 100) list.push({ level:'error', msg:'生产状态为「已完成」，但整体进度仅 ' + t.progress + '%' });
+  if (t.status !== '已完成' && t.progress >= 100) list.push({ level:'error', msg:'整体进度已 100%，但生产状态仍为「' + t.status + '」' });
+  if (t.progress >= 30 && !hasStageData(t,'cell') && !hasStageData(t,'mp') && !hasStageData(t,'repack')) {
+    list.push({ level:'warn', msg:'进度 ' + t.progress + '%，但电芯/M-P/翻包均无数值' });
+  }
+  if (t.shipStatus === '已签收' && t.progress < 100) list.push({ level:'warn', msg:'运输状态「已签收」，但生产进度未完成' });
+  if (t.shipStatus === '在途' && (t.repack || 0) === 0 && (t.mpStock || 0) === 0) {
+    list.push({ level:'warn', msg:'运输状态「在途」，但无翻包量或成品库存' });
+  }
+  /* 海外基地：电芯到货 → 组装需求（齐套） */
+  if (bm.type === 'ov' && (t.mpDemand || 0) > 0) {
+    const r = (t.cellArrived || 0) / t.mpDemand;
+    const pct = Math.round(r * 100);
+    if (r < 0.5) list.push({ level:'error', msg:'海外齐套严重不足：电芯到货 ' + fmt(t.cellArrived) + ' / 组装需求 ' + fmt(t.mpDemand) + '（' + pct + '%）' });
+    else if (r < 0.8) list.push({ level:'warn', msg:'海外齐套率偏低 ' + pct + '%：电芯到货 ' + fmt(t.cellArrived) + ' / 需求 ' + fmt(t.mpDemand) });
+  }
+  taskRoutes(po, t).forEach(r => {
+    if (r.weeks >= 9) list.push({ level:'warn', msg:'长周期航线（' + r.weeks + ' 周）：' + nodeName(r.from) + ' → ' + nodeName(r.to) });
+  });
+  const prevW = prevWeeklyRec(t.weekly);
+  if (prevW && t.progress < prevW.progress) list.push({ level:'warn', msg:'周进度倒退：' + prevW.week + ' ' + prevW.progress + '% → ' + draft.week + ' ' + t.progress + '%' });
+  return list;
+}
+function riskLevelOf(po, t){
+  const list = taskRisks(po, t).concat(poRisks(po));
+  if (list.some(r => r.level === 'error')) return 'error';
+  if (list.length) return 'warn';
+  return 'ok';
+}
+
+/* ---------- 汇总 ---------- */
+function aggregate(){
+  const pos = scopePOs();
+  let plan = 0, wip = 0, done = 0;
+  pos.forEach(p => { plan += p.kpi.plan; wip += p.kpi.wip; done += p.kpi.done; });
+  return { plan, wip, done, rate: plan ? Math.round(done / plan * 1000) / 10 : 0 };
+}
+function weekPerf(w){
+  const wk = w || draft.week;
+  let plan = 0, act = 0, has = false;
+  scopePOs().forEach(po => {
+    const p = planOf(po, wk), a = actOf(po, wk);
+    if (p != null) { plan += p; if (a != null) { act += a; has = true; } }
+  });
+  return { plan, act, has, rate: plan ? Math.round(act / plan * 1000) / 10 : null };
+}
+/* 实物在管：国内厂内 / 在途 / 海外 三段，用于回答「货现在在哪」 */
+function logisticsAgg(){
+  const pos = scopePOs(), cur = draft.week, next = weekAdd(cur, 1);
+  let inTransit = 0, nextArrive = 0, transitCnt = 0, trCell = 0, trPack = 0;
+  let ovInv = 0, ovWip = 0, ovRepack = 0;
+  let cnStock = 0, cnWip = 0;
+  const cnBases = new Set(), ovBases = new Set();
+  let kitNum = 0, kitDen = 0, kitTasks = 0, kitWeak = 0;
+  pos.forEach(po => {
+    po.routes.forEach((r, i) => {
+      if (!(r.qty > 0)) return;
+      const eta = routeEta(po, i);
+      if (!eta) return;
+      if (weekDiff(r.departWeek, cur) >= 0 && weekDiff(cur, eta) > 0) {
+        inTransit += r.qty; transitCnt++;
+        if (r.mat === 'pack') trPack += r.qty; else trCell += r.qty;
+      }
+      if (eta === next) nextArrive += r.qty;
+    });
+    po.tasks.forEach(t => {
+      const bm = BASE_META[t.base];
+      if (!bm) return;
+      if (bm.type === 'ov') {
+        ovInv += t.mpStock || 0; ovWip += t.mpWip || 0; ovRepack += t.repack || 0;
+        ovBases.add(t.base);
+        if ((t.mpDemand || 0) > 0) {
+          kitNum += t.cellArrived || 0; kitDen += t.mpDemand; kitTasks++;
+          if ((t.cellArrived || 0) / t.mpDemand < 0.8) kitWeak++;
+        }
+      } else {
+        cnStock += (t.cellStock || 0) + (t.mpStock || 0);
+        cnWip += (t.cellWip || 0) + (t.mpWip || 0);
+        cnBases.add(t.base);
+      }
+    });
+  });
+  const ovStock = ovInv + ovWip + ovRepack;
+  return {
+    inTransit, nextArrive, transitCnt, trCell, trPack,
+    cnStock, cnWip, cnBaseCnt: cnBases.size,
+    ovInv, ovWip, ovRepack, ovStock, ovBaseCnt: ovBases.size,
+    kitNum, kitDen, kitTasks, kitWeak,
+    kitRate: kitDen ? Math.round(kitNum / kitDen * 1000) / 10 : null,
+    flowTotal: cnStock + cnWip + inTransit + ovStock
+  };
+}
+/* 风险结构：按触发规则计数，区分高危 / 提醒；affected = 受影响的 PO 数（含任务级） */
+function riskStats(){
+  let e = 0, w = 0, affected = 0, taskHit = 0;
+  scopePOs().forEach(po => {
+    let hit = false;
+    const pr = poRisks(po);
+    if (pr.length) hit = true;
+    pr.forEach(r => r.level === 'error' ? e++ : w++);
+    po.tasks.forEach(t => {
+      const tr = taskRisks(po, t);
+      if (tr.length) { hit = true; taskHit++; }
+      tr.forEach(r => r.level === 'error' ? e++ : w++);
+    });
+    if (hit) affected++;
+  });
+  return { e, w, total: e + w, poHit: affected, taskHit };
+}
+/* 交付窗口：最近截止周与剩余周数 */
+function dueStats(){
+  const cur = draft.week;
+  let minLeft = null, target = null, overdue = 0, inWindow = 0;
+  scopePOs().forEach(po => {
+    if (!WK_RE.test(po.dueWeek || '')) return;
+    const left = weekDiff(cur, po.dueWeek);
+    if (left < 0) overdue++;
+    if (left <= 4) inWindow++;
+    if (minLeft === null || left < minLeft) { minLeft = left; target = po; }
+  });
+  return { minLeft, target, overdue, inWindow };
+}
+/* 近 8 周：单周实际产出 vs 周计划 */
+function trendSeries(){
+  const weeks = [];
+  for (let i = -7; i <= 0; i++) weeks.push(weekAdd(draft.week, i));
+  return weeks.map(w => ({
+    week: w,
+    act: scopePOs().reduce((s, po) => s + (actOf(po, w) || 0), 0),
+    plan: scopePOs().reduce((s, po) => { const p = planOf(po, w); return s + (p == null ? 0 : p); }, 0)
+  }));
+}
+/* 迷你柱状图（自适应宽度）：柱=实际，虚线=周计划。周标签用 HTML 渲染，避免 SVG 横向拉伸变形 */
+function weekChart(series){
+  if (!series.length) return '<div style="font-size:10px;color:#b8c8d8">周记录不足</div>';
+  const W = 300, H = 58, padL = 2, padR = 2, padT = 7, padB = 2;
+  const n = series.length;
+  const max = Math.max(1, ...series.map(s => Math.max(s.act, s.plan))) * 1.06;
+  const slot = (W - padL - padR) / n;
+  const bw = Math.max(5, slot * 0.5);
+  const base = H - padB;
+  const y = v => base - (v / max) * (base - padT);
+  let bars = '', pts = '';
+  series.forEach((s, i) => {
+    const cx = padL + slot * (i + 0.5);
+    const top = y(s.act), h = Math.max(1.5, base - top);
+    bars += '<rect x="' + (cx - bw / 2).toFixed(1) + '" y="' + top.toFixed(1) + '" width="' + bw.toFixed(1) +
+      '" height="' + h.toFixed(1) + '" rx="1.5" fill="' + (i === n - 1 ? '#2f7fb8' : '#b6d0e6') + '"/>';
+    pts += (i ? 'L' : 'M') + cx.toFixed(1) + ' ' + y(s.plan).toFixed(1) + ' ';
+  });
+  const svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none">' +
+    '<line x1="' + padL + '" y1="' + base + '" x2="' + (W - padR) + '" y2="' + base + '" stroke="#e6edf4" stroke-width="1" vector-effect="non-scaling-stroke"/>' +
+    bars +
+    '<path d="' + pts.trim() + '" fill="none" stroke="#e0a13a" stroke-width="1.2" stroke-dasharray="3 2.5"' +
+    ' stroke-linejoin="round" vector-effect="non-scaling-stroke"/>' +
+    '</svg>';
+  const xl = '<div class="ov-trend-x">' + series.map((s, i) =>
+    '<span' + (i === n - 1 ? ' class="cur"' : '') + '>' + shortWeek(s.week) + '</span>').join('') + '</div>';
+  return svg + xl;
+}
+
+/* ============================================================
+ *  6. 渲染：顶部 / 概览
+ * ============================================================ */
+function renderHeader(){
+  const po = state.currentPO === 'ALL' ? null : getPO(state.currentPO);
+  const pnm = state.currentPN === 'ALL' ? null : PN_META[state.currentPN];
+  const badge = document.getElementById('pnBadge');
+  const name = document.getElementById('pnName');
+  const code = document.getElementById('pnCode');
+
+  if (po) {
+    badge.textContent = po.pn.replace('PN-', '');
+    name.textContent = (PN_META[po.pn] ? PN_META[po.pn].name + ' · ' : '') + po.name;
+    code.textContent = po.id + ' · ' + po.window + ' · 交付截止 ' + po.dueWeek;
+  } else if (pnm) {
+    const cnt = draft.pos.filter(p => p.pn === state.currentPN);
+    badge.textContent = state.currentPN.replace('PN-', '');
+    name.textContent = pnm.name;
+    code.textContent = pnm.region + ' · ' + pnm.type + ' · ' + cnt.length + ' 个 PO · 计划 ' + fmt(cnt.reduce((s, p) => s + p.kpi.plan, 0)) + ' BP';
+  } else {
+    badge.textContent = 'PN · ALL';
+    name.textContent = '全部项目群';
+    code.textContent = Object.keys(PN_META).length + ' 个 PN · ' + draft.pos.length + ' 个 PO · ' +
+      new Set(draft.pos.map(p => p.customer)).size + ' 个客户区域';
+  }
+  document.getElementById('weekBadgeText').textContent = '数据周 ' + draft.week;
+}
+
+function renderPNSelect(){
+  const sel = document.getElementById('pnSelect');
+  const cnt = {};
+  draft.pos.forEach(p => { cnt[p.pn] = (cnt[p.pn] || 0) + 1; });
+  sel.innerHTML = '<option value="ALL">全部 PN（' + Object.keys(PN_META).length + '）</option>' +
+    Object.entries(PN_META).map(([id, m]) =>
+      '<option value="' + id + '">' + esc(id.replace('PN-', '') + ' · ' + m.name) + '（' + (cnt[id] || 0) + '）</option>').join('');
+  sel.value = state.currentPN;
+}
+function renderPOSelect(){
+  const sel = document.getElementById('poSelect');
+  const list = state.currentPN === 'ALL' ? draft.pos : draft.pos.filter(p => p.pn === state.currentPN);
+  sel.innerHTML = '<option value="ALL">全部 PO（' + list.length + '）</option>' +
+    list.map(po => '<option value="' + po.id + '">' + esc(po.id + ' · ' + po.name) + '</option>').join('');
+  sel.value = state.currentPO;
+}
+
+function animateNumber(id, target, unit, dec){
+  const el = document.getElementById(id);
+  if (!el) return;
+  const from = parseFloat(el.textContent.replace(/[^\d.]/g, '')) || 0;
+  const startTime = performance.now();
+  const dur = 420;
+  const dp = dec || 0;
+  function step(now){
+    const p = Math.min(Math.max((now - startTime) / dur, 0), 1);
+    const v = from + (target - from) * (1 - Math.pow(1 - p, 3));
+    el.innerHTML = (dp ? v.toFixed(dp) : fmt(Math.round(v))) + '<span class="unit">' + unit + '</span>';
+    if (p < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+function setBar(id, pct){
+  const el = document.getElementById(id);
+  if (el) el.style.width = Math.max(0, Math.min(100, pct || 0)).toFixed(1) + '%';
+}
+function setText(id, txt){
+  const el = document.getElementById(id);
+  if (el) el.textContent = txt;
+}
+
+function renderOverview(){
+  const agg = aggregate();
+  const lg  = logisticsAgg();
+  const rs  = riskStats();
+  const ds  = dueStats();
+  const perf = weekPerf();
+  const flow = lg.flowTotal || 1;
+
+  /* ---------- 第一行：订单交付口径（分母统一 = 计划 BP） ---------- */
+  animateNumber('ovRate', agg.rate, '%', 1);
+  setBar('ovRateBar', agg.rate);
+  setText('ovRateSub', '已交 ' + fmt(agg.done) + ' / 计划 ' + fmt(agg.plan) + ' BP');
+
+  document.getElementById('ovAch').innerHTML = (perf.rate == null ? '—' : perf.rate) + '<span class="unit">%</span>';
+  setBar('ovAchBar', perf.rate);
+  const lw = weekPerf(weekAdd(draft.week, -1));
+  let achSub = perf.has
+    ? '实 ' + fmt(perf.act) + ' / 计 ' + fmt(perf.plan) + ' BP'
+    : '本周计划 ' + fmt(perf.plan) + ' BP';
+  if (perf.rate != null && lw.rate != null) {
+    const d = Math.round((perf.rate - lw.rate) * 10) / 10;
+    achSub += ' · 较上周 ' + (d >= 0 ? '+' : '') + d + 'pt';
+  }
+  setText('ovAchSub', achSub);
+
+  const leftBP = Math.max(0, agg.plan - agg.done);
+  animateNumber('ovLeft', leftBP, 'BP');
+  setBar('ovLeftBar', agg.plan ? leftBP / agg.plan * 100 : 0);
+  let leftSub;
+  if (ds.target && ds.minLeft != null) {
+    leftSub = ds.minLeft < 0
+      ? '最近截止 ' + ds.target.dueWeek + ' 已逾期 ' + (-ds.minLeft) + ' 周'
+      : '最近截止 ' + shortWeek(ds.target.dueWeek) + ' · 剩 ' + ds.minLeft + ' 周';
+    if (ds.inWindow > 0 && ds.minLeft >= 0) leftSub += ' · ' + ds.inWindow + ' 个 PO 4 周内到期';
+  } else leftSub = scopeLabel();
+  setText('ovLeftSub', leftSub);
+  document.getElementById('ovLeftCard').title = ds.target
+    ? '最近交付窗口：' + ds.target.id + ' · ' + ds.target.name + '（截止 ' + ds.target.dueWeek + '）'
+    : '该范围无交付窗口';
+
+  const riskCard = document.getElementById('ovRiskCard');
+  document.getElementById('ovRisk').innerHTML = rs.total + '<span class="unit">项</span>';
+  setText('ovRiskSub', rs.total
+    ? rs.e + ' 高危 · ' + rs.w + ' 提醒 · 点击筛选'
+    : '当前范围无风险项');
+  riskCard.title = rs.total ? (rs.poHit + ' 个 PO / ' + rs.taskHit + ' 个任务存在风险') : '无风险';
+  riskCard.classList.toggle('active', state.riskOnly);
+  riskCard.classList.toggle('ok', rs.total === 0);
+  const denom = Math.max(1, rs.total);
+  setBar('ovRiskBarE', rs.e / denom * 100);
+  setBar('ovRiskBarW', rs.w / denom * 100);
+
+  /* ---------- 第二行：实物在管口径（货现在在哪一段，分母 = 在管合计） ---------- */
+  const share = v => Math.round(v / flow * 100);
+  animateNumber('ovCn', lg.cnStock + lg.cnWip, 'BP');
+  setBar('ovCnBar', (lg.cnStock + lg.cnWip) / flow * 100);
+  setText('ovCnSub', '库存 ' + fmt(lg.cnStock) + ' + 在制 ' + fmt(lg.cnWip) + ' · ' + lg.cnBaseCnt + ' 基地');
+  document.getElementById('ovCnCard').title = '占在管合计 ' + fmt(lg.flowTotal) + ' BP 的 ' + share(lg.cnStock + lg.cnWip) + '%';
+
+  animateNumber('ovTransit', lg.inTransit, 'BP');
+  setBar('ovTransitBar', lg.inTransit / flow * 100);
+  setText('ovTransitSub', '电芯 ' + fmt(lg.trCell) + ' · 成品 ' + fmt(lg.trPack) + ' · 下周到港 ' + fmt(lg.nextArrive));
+  document.getElementById('ovTransitCard').title = '占在管合计 ' + fmt(lg.flowTotal) + ' BP 的 ' + share(lg.inTransit) + '%';
+
+  animateNumber('ovOvStock', lg.ovStock, 'BP');
+  setBar('ovOvStockBar', lg.ovStock / flow * 100);
+  setText('ovOvStockSub', '库存 ' + fmt(lg.ovInv) + ' + 在制 ' + fmt(lg.ovWip) + ' + 翻包 ' + fmt(lg.ovRepack));
+  document.getElementById('ovOvStockCard').title = '占在管合计 ' + fmt(lg.flowTotal) + ' BP 的 ' + share(lg.ovStock) + '%';
+
+  const kit = document.getElementById('ovKit');
+  const kitCard = document.getElementById('ovKitCard');
+  kitCard.classList.remove('warn', 'bad');
+  if (lg.kitRate == null) {
+    kit.innerHTML = '—<span class="unit">%</span>';
+    setBar('ovKitBar', 0);
+    setText('ovKitSub', '该范围无海外组装需求');
+  } else {
+    kit.innerHTML = lg.kitRate + '<span class="unit">%</span>';
+    setBar('ovKitBar', lg.kitRate);
+    if (lg.kitRate < 50) kitCard.classList.add('bad');
+    else if (lg.kitRate < 80) kitCard.classList.add('warn');
+    setText('ovKitSub', '到货 ' + fmt(lg.kitNum) + ' / 需求 ' + fmt(lg.kitDen) + ' BP · ' +
+      lg.kitWeak + '/' + lg.kitTasks + ' 个任务缺料');
+  }
+
+  /* ---------- 右侧：近 8 周周产出 ---------- */
+  const series = trendSeries();
+  document.getElementById('ovTrend').innerHTML = weekChart(series);
+  const acts = series.map(s => s.act);
+  const cur = acts.length ? acts[acts.length - 1] : 0;
+  const avg = acts.length ? Math.round(acts.reduce((a, b) => a + b, 0) / acts.length) : 0;
+  const peak = acts.length ? Math.max(...acts) : 0;
+  document.getElementById('ovTrendFoot').innerHTML =
+    '<span>周均 <b>' + fmt(avg) + '</b></span>' +
+    '<span>峰值 <b>' + fmt(peak) + '</b></span>' +
+    '<span>本周 <b>' + fmt(cur) + '</b></span>';
+}
+
+/* ============================================================
+ *  7. 渲染：左侧筛选
+ * ============================================================ */
+function allTasks(){
+  return draft.pos.flatMap(po => po.tasks.map(t => ({ po, t })));
+}
+
+function renderFilters(){
+  const all = allTasks();
+
+  const poCount = {};
+  all.forEach(({ po }) => { poCount[po.id] = (poCount[po.id] || 0) + 1; });
+  document.getElementById('filterPO').innerHTML = draft.pos.filter(po =>
+    state.currentPN === 'ALL' || po.pn === state.currentPN
+  ).map(po =>
+    '<label class="filter-item"><input type="checkbox" data-filter="po" value="' + po.id + '"' +
+    (state.filters.po.includes(po.id) ? ' checked' : '') + '> ' + esc(po.id.replace('PO-2024-', '')) +
+    ' <span class="count">' + (poCount[po.id] || 0) + '</span></label>'
+  ).join('');
+
+  const baseMap = {};
+  all.forEach(({ t }) => {
+    baseMap[t.base] = baseMap[t.base] || { name: nodeName(t.base), count:0 };
+    baseMap[t.base].count++;
+  });
+  document.getElementById('filterBase').innerHTML = Object.entries(baseMap).sort((a, b) => b[1].count - a[1].count).map(([id, b]) =>
+    '<label class="filter-item"><input type="checkbox" data-filter="base" value="' + id + '"' +
+    (state.filters.base.includes(id) ? ' checked' : '') + '> ' + esc(b.name) +
+    ' <span class="count">' + b.count + '</span></label>'
+  ).join('');
+
+  const stageCount = { cell:0, mp:0, repack:0 };
+  all.forEach(({ t }) => { Object.keys(stageCount).forEach(k => { if (hasStageData(t, k)) stageCount[k]++; }); });
+  document.getElementById('filterStage').innerHTML = Object.entries(STAGE_LABEL).map(([k, label]) =>
+    '<label class="filter-item"><input type="checkbox" data-filter="stage" value="' + k + '"' +
+    (state.filters.stage.includes(k) ? ' checked' : '') + '> ' + label +
+    ' <span class="count">' + stageCount[k] + '</span></label>'
+  ).join('');
+
+  const modeCount = { '汽运':0, '火车':0, '海运':0 };
+  all.forEach(({ po }) => po.routes.forEach(r => { modeCount[r.mode] = (modeCount[r.mode] || 0) + 1; }));
+  document.getElementById('filterMode').innerHTML = ['汽运','火车','海运'].map(k =>
+    '<label class="filter-item"><input type="checkbox" data-filter="mode" value="' + k + '"' +
+    (state.filters.mode.includes(k) ? ' checked' : '') + '> ' + k +
+    ' <span class="count">' + (modeCount[k] || 0) + '</span></label>'
+  ).join('');
+
+  const statusCount = { '未发货':0, '在途':0, '已签收':0 };
+  all.forEach(({ t }) => { statusCount[t.shipStatus] = (statusCount[t.shipStatus] || 0) + 1; });
+  document.getElementById('filterStatus').innerHTML = ['未发货','在途','已签收'].map(k =>
+    '<label class="filter-item"><input type="checkbox" data-filter="status" value="' + k + '"' +
+    (state.filters.status.includes(k) ? ' checked' : '') + '> ' + k +
+    ' <span class="count">' + (statusCount[k] || 0) + '</span></label>'
+  ).join('');
+
+  document.getElementById('riskOnly').checked = state.riskOnly;
+}
+
+/* ============================================================
+ *  8. 过滤 / 排序
+ * ============================================================ */
+function filteredRows(){
+  let rows = allTasks();
+  if (state.currentPN !== 'ALL') rows = rows.filter(r => r.po.pn === state.currentPN);
+  if (state.currentPO !== 'ALL') rows = rows.filter(r => r.po.id === state.currentPO);
+  if (state.search) {
+    const s = state.search.toLowerCase();
+    rows = rows.filter(({ po, t }) =>
+      (po.id + ' ' + po.name + ' ' + po.pn).toLowerCase().includes(s) ||
+      nodeName(t.base).toLowerCase().includes(s) || t.id.toLowerCase().includes(s)
+    );
+  }
+  const f = state.filters;
+  if (f.po.length) rows = rows.filter(r => f.po.includes(r.po.id));
+  if (f.base.length) rows = rows.filter(r => f.base.includes(r.t.base));
+  if (f.stage.length) rows = rows.filter(r => f.stage.some(s => hasStageData(r.t, s)));
+  if (f.mode.length) rows = rows.filter(r => r.po.routes.some(x => f.mode.includes(x.mode)));
+  if (f.status.length) rows = rows.filter(r => f.status.includes(r.t.shipStatus));
+
+  rows = rows.map(r => {
+    const risks = taskRisks(r.po, r.t);
+    const poRisk = poRisks(r.po);
+    return {
+      ...r, risks, poRisk,
+      riskLevel: risks.some(x => x.level === 'error') ? 'error' : (risks.length ? 'warn' : 'ok'),
+      poRiskLevel: poRisk.some(x => x.level === 'error') ? 'error' : (poRisk.length ? 'warn' : 'ok')
+    };
+  });
+  if (state.riskOnly) rows = rows.filter(r => r.risks.length || r.poRisk.length);
+
+  const key = state.sortKey, dir = state.sortDir === 'asc' ? 1 : -1;
+  rows.sort((a, b) => {
+    let va, vb;
+    if (key === 'baseName') { va = nodeName(a.t.base); vb = nodeName(b.t.base); }
+    else if (key === 'risk') { va = a.risks.length + a.poRisk.length; vb = b.risks.length + b.poRisk.length; }
+    else if (key === 'poId') { va = a.po.id; vb = b.po.id; }
+    else va = a.t[key], vb = b.t[key];
+    if (typeof va === 'string') return va.localeCompare(vb, 'zh') * dir;
+    return (va - vb) * dir;
+  });
+  return rows;
+}
+
+/* ============================================================
+ *  9. 渲染：表格
+ * ============================================================ */
+function wkDeltaChip(cur, prev){
+  if (!prev) return '<span class="wk-delta none" title="无更早的周记录">—</span>';
+  const d = cur - prev;
+  if (d > 0) return '<span class="wk-delta up" title="较上一记录周">▲+' + d + '</span>';
+  if (d < 0) return '<span class="wk-delta down" title="较上一记录周">▼' + d + '</span>';
+  return '<span class="wk-delta flat" title="较上一记录周持平">＝0</span>';
+}
+
+/* 物流动态：按物料链展示——优先显示在途段（带链序），否则显示最近一次计划发运 */
+function logisticsCell(po){
+  const cur = draft.week;
+  const flows = flowLegs(po);
+  const all = flows.cell.concat(flows.pack).sort((a, b) => (a.etd || '9999') < (b.etd || '9999') ? -1 : 1);
+  const seqOf = l => {
+    const arr = flows[l.mat];
+    const i = arr.indexOf(arr.find(x => x.idx === l.idx));
+    return SEQ[i >= 0 ? i : 0];
+  };
+  const line = l => {
+    const tag = '<span class="tl-ship">' + seqOf(l) + MAT_LABEL[l.mat] + '</span> ';
+    const path = '<span style="font-size:10px;color:#5a7a9a">' + esc(nodeName(l.from)) + '→' + esc(nodeName(l.to)) + '</span>';
+    const st = legState(l, cur);
+    if (st === 'transit') {
+      const bad = legDueBad(po, l);
+      return '<div style="margin-bottom:2px">' + tag + '<span class="lg-transit">在途 ' + fmt(l.qty) + '</span> ' + path +
+        '<br><span style="font-size:10px;color:#99aabb">' + shortWeek(l.etd) + ' 发 · <span class="' + (bad ? 'lg-bad' : '') + '">⚓ ' + shortWeek(l.eta) + '</span></span></div>';
+    }
+    if (st === 'wait') {
+      return '<div style="margin-bottom:2px">' + tag + '<span class="lg-next">计划 ' + shortWeek(l.etd) + ' 发 ' + fmt(l.qty) + '</span> ' + path +
+        '<br><span style="font-size:10px;color:#99aabb">⚓ 预计 ' + shortWeek(l.eta) + '</span></div>';
+    }
+    return '<div style="margin-bottom:2px">' + tag + path +
+      '<br><span style="font-size:10px;color:#99aabb">' + shortWeek(l.etd) + ' 发 · ⚓ ' + shortWeek(l.eta) + ' 已到港</span></div>';
+  };
+  const transit = all.filter(l => legState(l, cur) === 'transit');
+  if (transit.length) return transit.slice(0, 2).map(line).join('');
+  const next = all.filter(l => legState(l, cur) === 'wait' && WK_RE.test(l.etd || ''))
+    .sort((a, b) => a.etd < b.etd ? -1 : 1)[0];
+  if (next) return line(next);
+  return '<span style="color:#b8c8d8">—</span>';
+}
+
+function renderTable(){
+  const rows = filteredRows();
+  const total = rows.length;
+  document.getElementById('tableTotal').textContent = '共 ' + total + ' 条 · ' + scopePOs().length + ' 个 PO';
+
+  const totalPages = Math.max(1, Math.ceil(total / state.pageSize));
+  state.page = Math.min(Math.max(1, state.page), totalPages);
+  const start = (state.page - 1) * state.pageSize;
+  const pageRows = rows.slice(start, start + state.pageSize);
+
+  const tbody = document.getElementById('tableBody');
+  if (!pageRows.length) {
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="11">没有匹配的任务，请调整筛选条件</td></tr>';
+  } else {
+    tbody.innerHTML = pageRows.map(({ po, t, risks, riskLevel, poRisk, poRiskLevel }) => {
+      const meta = BASE_META[t.base] || { name: nodeName(t.base), type:'cn', tag:'' };
+      const prog = t.progress;
+      const riskTitle = risks.map(r => r.msg).join('；');
+      const shipCls = SHIP_CLASS[t.shipStatus] || 'wait';
+      const stageTags = ['cell','mp','repack'].map(s =>
+        '<span class="tag stage-' + s + '">' + STAGE_LABEL[s] + '</span>').join('');
+      const rowCls = [
+        (state.selected.taskId === t.id && state.selected.poId === po.id) ? 'selected' : '',
+        (riskLevel !== 'ok' || poRiskLevel !== 'ok') ? 'risk-row' : ''
+      ].filter(Boolean).join(' ');
+      return '<tr data-po="' + po.id + '" data-task="' + t.id + '"' +
+        (rowCls ? ' class="' + rowCls + '"' : '') +
+        '>' +
+        '<td><span class="num-plain">' + esc(po.id) + '</span>' +
+          (poRisk.length ? '<span class="risk-chip ' + poRiskLevel + '" style="margin-left:5px" title="PO 级校验：' + esc(poRisk.map(x => x.msg).join('；')) + '">PO ' +
+            (poRiskLevel === 'error' ? '✕ ' : '⚠ ') + poRisk.length + '</span>' : '') +
+          '<br><span style="font-size:10px;color:#99aabb">' + esc(po.name) + '</span></td>' +
+        '<td><span class="tag ' + meta.type + '">' + (meta.type === 'cn' ? '国内' : '海外') + '</span>' +
+          '<b style="color:#1a3a5c">' + esc(meta.name) + '</b>' +
+          (meta.tag ? '<br><span style="font-size:10px;color:#99aabb">' + esc(meta.tag) + '</span>' : '') + '</td>' +
+        '<td>' + stageTags + '</td>' +
+        '<td><span class="num-green editable" data-edit="cellStock" title="点击编辑电芯库存">' + fmt(t.cellStock) + '</span>' +
+          ' / <span class="num-yellow editable" data-edit="cellWip" title="点击编辑电芯在制">' + fmt(t.cellWip) + '</span></td>' +
+        '<td><span class="num-green editable" data-edit="mpStock" title="点击编辑 M/P 库存">' + fmt(t.mpStock) + '</span>' +
+          ' / <span class="num-yellow editable" data-edit="mpWip" title="点击编辑 M/P 在制">' + fmt(t.mpWip) + '</span></td>' +
+        '<td><span class="num-plain editable" data-edit="repack" title="点击编辑翻包量">' + fmt(t.repack) + '</span></td>' +
+        '<td><div class="progress-mini"><div class="bar"><div class="fill' + (prog >= 100 ? ' done' : '') + '" style="width:' + Math.min(100, Math.max(0, prog)) + '%"></div></div>' +
+          '<span class="pct">' + prog + '%</span></div>' + wkDeltaChip(prog, (prevWeeklyRec(t.weekly) || {}).progress) + '</td>' +
+        '<td><span class="ship-badge ' + shipCls + '">' + t.shipStatus + '</span></td>' +
+        '<td>' + logisticsCell(po) + '</td>' +
+        '<td><span class="risk-chip ' + riskLevel + '" title="' + esc(riskTitle || '无异常') + '">' +
+          (riskLevel === 'ok' ? '✓ 正常' : (riskLevel === 'error' ? '✕ ' : '⚠ ') + risks.length + ' 项') + '</span></td>' +
+        '<td><span class="action-link" data-action="detail">详情 →</span></td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  document.getElementById('pageNow').textContent = state.page;
+  document.getElementById('pageTotal').textContent = totalPages;
+  document.getElementById('prevPage').disabled = state.page <= 1;
+  document.getElementById('nextPage').disabled = state.page >= totalPages;
+
+  document.querySelectorAll('#tableView th[data-sort]').forEach(th => {
+    const active = th.dataset.sort === state.sortKey;
+    th.classList.toggle('sorted', active);
+    const icon = th.querySelector('.sort-icon');
+    if (icon) icon.textContent = active ? (state.sortDir === 'asc' ? '↑' : '↓') : '↕';
+  });
+}
+
+/* ============================================================
+ * 10. 渲染：周计划时间轴（P0 核心视图）
+ * ============================================================ */
+/* ---- 运输方式图标：锚 = 海运，轮胎 = 汽运，机车 = 火车（内联 SVG，颜色随状态变化） ---- */
+const MODE_ICON = {
+  '海运': '<svg class="mi" width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="2.8" r="1.2"/><path d="M8 4v8.4M4.5 5.8h7"/><path d="M8 12.4c-2.4 0-4-1.6-4-3.4M8 12.4c2.4 0 4-1.6 4-3.4"/></svg>',
+  '汽运': '<svg class="mi" width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="5.5"/><circle cx="8" cy="8" r="1.9"/><path d="M8 2.5v3.6M8 9.9v3.6M2.5 8h3.6M9.9 8h3.6"/></svg>',
+  '火车': '<svg class="mi" width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3.7" y="1.9" width="8.6" height="8.2" rx="1.7"/><path d="M3.7 6.3h8.6"/><circle cx="6.3" cy="12.1" r="1.3"/><circle cx="9.7" cy="12.1" r="1.3"/><path d="M4.9 13.5 3.5 15M11.1 13.5 12.5 15"/></svg>'
+};
+function modeIcon(m){ return MODE_ICON[m] || ''; }
+/* ---- 阶段列用的短名与运输周期编码：S=船 / T=火车 / C=汽车 + 周期周数，如 S10 ---- */
+const NODE_SHORT = {
+  ND:'宁德', YB:'宜宾', LY:'溧阳', XN:'西宁', ZQ:'肇庆', XM:'厦门', SH:'上海', YC:'宜春',
+  GY:'贵阳', JN:'济宁', LOY:'洛阳', DE:'德国', HU:'匈牙利', ES:'西班牙', ID:'印尼',
+  'HUB-SHA':'上海港', 'HUB-RTM':'鹿特丹', 'HUB-LAX':'洛杉矶', 'HUB-GZ':'广州', 'HUB-SIN':'新加坡',
+  'HUB-SYD':'悉尼', 'HUB-JED':'吉达',
+  'EU-CUST':'欧洲', 'US-CUST':'北美', 'CN-CUST':'国内', 'SEA-CUST':'东南亚', 'AU-CUST':'澳洲', 'ME-CUST':'中东'
+};
+const MODE_CODE = { '海运':'S', '火车':'T', '汽运':'C' };
+function nodeShort(id){ return NODE_SHORT[id] || nodeName(id); }
+function legCode(l){ return (MODE_CODE[l.mode] || '') + (l.weeks || 0); }
+/* 文本宽度估算（px）：CJK/全角≈1em · 箭头与间隔号等符号≈0.92em · 数字≈0.6em · 拉丁≈0.56em
+   用于把「阶段」「W-1」两列算到刚好容纳最长内容，不靠手写固定宽度 */
+function textW(s, size){
+  let w = 0;
+  String(s == null ? '' : s).split('').forEach(ch => {
+    const c = ch.codePointAt(0);
+    if (c >= 0x2E80) w += size;
+    else if (c >= 0x2000 && c <= 0x2BFF) w += size * 0.92;
+    else if (ch === ' ') w += size * 0.3;
+    else w += size * 0.6;
+  });
+  return w;
+}
+function inWin(w, s, e){ return weekDiff(s, w) >= 0 && weekDiff(w, e) >= 0; }
+
+function renderTimeline(){
+  const cur = draft.week;
+  const weeks = [];
+  for (let i = -1; i <= 7; i++) weeks.push(weekAdd(cur, i));
+  const curIdx = weeks.indexOf(cur);
+
+  const pos = scopePOs().filter(po => !state.filters.po.length || state.filters.po.includes(po.id));
+  document.getElementById('tableTotal').textContent = '共 ' + pos.length + ' 个 PO · W-1 → W+7';
+
+  /* 一个 PO 的全部航段（电芯链 + 成品链，按 ETD 排序） */
+  function poLegs(po){
+    const fl = flowLegs(po);
+    return fl.cell.concat(fl.pack)
+      .filter(l => WK_RE.test(l.etd || '') && (l.qty || 0) > 0)
+      .sort((a, b) => a.etd < b.etd ? -1 : a.etd > b.etd ? 1 : a.idx - b.idx);
+  }
+
+  /* ---- 列宽自适应：按最长内容实测「阶段」「W-1」两列宽度，内容刚好放下 ---- */
+  const w1Week = weeks[0];
+  let stageMax = 32, w1Max = 50;         /* 下限：表头「阶段」「W44」 */
+  pos.forEach(po => {
+    po.tasks.forEach(t => {
+      const meta = BASE_META[t.base] || {};
+      stageMax = Math.max(stageMax, textW(nodeShort(t.base) + '·' + (STAGE_LABEL[meta.stage] || '—'), 7.5));
+      const p = taskPlanOf(po, t, w1Week), a = taskActOf(po, t, w1Week);
+      if (a == null) { w1Max = Math.max(w1Max, textW('无记录', 9)); return; }
+      const gap = p == null ? null : a - p;
+      const rate = p ? Math.round(a / p * 100) : null;
+      const prevA = taskActOf(po, t, weekAdd(w1Week, -1));
+      const dv = prevA == null ? null : a - prevA;
+      const gapTxt = gap == null ? '--' : (gap >= 0 ? '+' : '−') + fmt(Math.abs(gap));
+      const dTxt = dv == null ? '--' : (dv >= 0 ? '▲' : '▼') + fmt(Math.abs(dv));
+      w1Max = Math.max(w1Max,
+        textW(fmt(a), 12) + 4 + textW(rate == null ? '--' : rate + '%', 9),
+        textW('GAP ' + gapTxt + ' · 环比 ' + dTxt, 8));
+    });
+    poLegs(po).forEach(l => {
+      stageMax = Math.max(stageMax, textW(nodeShort(l.from) + '→' + nodeShort(l.to) + '·' + legCode(l), 7.5));
+      const st = legState(l, w1Week);
+      const sent = st === 'transit' || st === 'arrived';
+      w1Max = Math.max(w1Max, 11 + 3 + (sent ? textW(fmt(l.qty), 11) + 2 + textW('BP', 7.5) : textW('待发', 11)));
+    });
+  });
+  const stageW = Math.ceil(stageMax + 2) + 8;   /* +2 渲染余量，+ 左右 padding 3+3 与 1px 边框 */
+  const w1W = Math.ceil(w1Max + 2) + 8;
+
+  document.getElementById('tlHead').innerHTML =
+    '<tr><th class="tl-label tl-col-po" style="width:108px">PO</th><th class="tl-col-stage" style="width:' + stageW + 'px">阶段</th>' +
+    weeks.map((w, wi) => {
+      const isCur = w === cur;
+      return '<th class="' + (isCur ? 'tl-cur' : '') + '" style="width:' + (wi === 0 ? w1W : isCur ? 94 : 58) + 'px">' + weekLabel(w, cur) +
+        (isCur ? '<div style="font-size:8px;font-weight:600">当前周</div>' : '') + '</th>';
+    }).join('') + '</tr>';
+
+  if (!pos.length) {
+    document.getElementById('tlBody').innerHTML = '<tr><td colspan="11" class="tl-empty">没有可展示的 PO，请调整筛选条件</td></tr>';
+    document.getElementById('tlFoot').innerHTML = '';
+    return;
+  }
+
+  /* 航段颜色：正常中性，临近/超过交付截止转黄、红 */
+  function legColor(po, l){
+    if (!WK_RE.test(l.etd || '')) return 'n';
+    if (routeStatusOf(po, l.idx) === '延误') return 'c-r';
+    if (!WK_RE.test(po.dueWeek || '') || !l.eta) return '';
+    const buf = weekDiff(l.eta, po.dueWeek);   /* 缓冲 = 截止 − ETA，>0 表示早于截止到港 */
+    return buf >= 2 ? '' : buf >= 0 ? 'c-y' : 'c-r';
+  }
+
+  /* 生产行：W-1 指标 · 当前周横道（灰=计划 / 绿=达成，上下各一行四值）· 未来周虚线框输入计划 */
+  function prodCells(po, t){
+    return weeks.map((w, wi) => {
+      if (wi === curIdx) {
+        const p = taskPlanOf(po, t, w), a = taskActOf(po, t, w);
+        if (p == null && a == null) return '<td class="tl-cell cur"><span class="w1-text">—</span></td>';
+        const prevA = taskActOf(po, t, weekAdd(w, -1));
+        const gap = (p == null || a == null) ? null : a - p;
+        const rate = p ? Math.round(a / p * 100) : null;
+        const delta = (a == null || prevA == null) ? null : a - prevA;
+        const wfill = rate == null ? 0 : Math.max(0, Math.min(100, rate));
+        const gCls = gap == null ? '' : gap >= 0 ? 'pos' : 'bad';
+        const dCls = delta == null ? '' : delta >= 0 ? 'pos' : 'bad';
+        const tip = '本周计划 ' + (p == null ? '--' : fmt(p)) + ' · 已达成 ' + (a == null ? '--' : fmt(a)) +
+          ' BP · 达成率 ' + (rate == null ? '--' : rate + '%');
+        return '<td class="tl-cell cur" title="' + tip + '">' +
+          '<div class="bar-vals"><span>' + (p == null ? '--' : fmt(p)) + '</span><b>' + (a == null ? '--' : fmt(a)) + '</b></div>' +
+          '<div class="bar-box"><i class="bar-fill' + (wfill >= 100 ? ' over' : '') + '" style="width:' + wfill + '%"></i></div>' +
+          '<div class="bar-vals"><span class="' + gCls + '">' + (gap == null ? '--' : (gap >= 0 ? '+' : '−') + fmt(Math.abs(gap))) +
+            '</span><span class="' + dCls + '">' + (delta == null ? '--' : (delta >= 0 ? '▲' : '▼') + fmt(Math.abs(delta))) +
+            '</span></div></td>';
+      }
+      if (wi < curIdx) {
+        const p = taskPlanOf(po, t, w), a = taskActOf(po, t, w), prevA = taskActOf(po, t, weekAdd(w, -1));
+        if (a == null) return '<td class="tl-cell"><div class="w1-text">无记录</div></td>';
+        const gap = p == null ? null : a - p;
+        const rate = p ? Math.round(a / p * 100) : null;
+        const aCls = rate == null ? '' : rate >= 95 ? 'pos' : rate >= 60 ? 'mid' : 'bad';
+        const gCls = gap == null ? '' : gap >= 0 ? 'pos' : (rate != null && rate >= 60) ? 'mid' : 'bad';
+        const d = prevA == null ? null : a - prevA;
+        const dCls = d == null ? '' : d >= 0 ? 'pos' : 'bad';
+        return '<td class="tl-cell" title="上周复盘：达成 ' + fmt(a) + ' / 计划 ' + (p == null ? '--' : fmt(p)) + ' BP' +
+          (rate == null ? '' : ' · 达成率 ' + rate + '%') + '（客观数据，不可修改）">' +
+          '<div class="w1-main"><b class="' + aCls + '">' + fmt(a) + '</b>' +
+          '<span class="w1-rate ' + aCls + '">' + (rate == null ? '--' : rate + '%') + '</span></div>' +
+          '<div class="w1-sub">GAP <b class="' + gCls + '">' + (gap == null ? '--' : (gap >= 0 ? '+' : '−') + fmt(Math.abs(gap))) +
+            '</b> · 环比 <b class="' + dCls + '">' + (d == null ? '--' : (d >= 0 ? '▲' : '▼') + fmt(Math.abs(d))) + '</b></div></td>';
+      }
+      const p = taskPlanOf(po, t, w);
+      return '<td class="tl-cell plan-cell">' +
+        '<input class="plan-input' + (p == null ? ' none' : '') + '" type="number" min="0" step="10" ' +
+        'value="' + (p == null ? '' : p) + '" data-plan-po="' + po.id + '" data-plan-week="' + w +
+        '" data-plan-task="' + t.id + '" title="' + w + ' 计划 ' + (p == null ? '--' : fmt(p)) + ' BP · 直接输入数值（实际产出不可修改）">' +
+        '</td>';
+    }).join('');
+  }
+
+  /* 运输行：W-1 状态 · 当前周 到港量/发运量 · 未来周一条单短线（ETD→ETA） */
+  function shipCells(po, l){
+    const base = nodeName(l.from) + ' → ' + nodeName(l.to);
+    const qtyTxt = fmt(l.qty) + ' BP';
+    const stat = w => {
+      const st = legState(l, w);
+      return { st, sent: st === 'transit' || st === 'arrived',
+        txt: st === 'transit' ? '在运中' : st === 'arrived' ? '已到港' : '待发运' };
+    };
+    const sentHtml = s => '<div class="ship-w1' + (s.sent ? '' : ' off') + '">' + modeIcon(l.mode) +
+      '<b>' + (s.sent ? fmt(l.qty) : '待发') + '</b>' + (s.sent ? '<span class="u">BP</span>' : '') + '</div>';
+
+    return weeks.map((w, wi) => {
+      const s = stat(w);
+      if (wi === curIdx) {
+        /* 已到港 / 本周到港：绿色显示到港量；否则同 W-1（发运方式 + 已发运量） */
+        if (WK_RE.test(l.eta || '') && weekDiff(l.eta, cur) >= 0) {
+          const thisWeek = l.eta === cur;
+          return '<td class="tl-cell log cur" title="' + esc(base) + ' · ' + l.mode + ' · ' +
+            (thisWeek ? '本周到港 ' : '已于 ' + l.eta + ' 到港 ') + qtyTxt + '">' +
+            '<div class="ship-w1 ok"><b>' + fmt(l.qty) + '</b><span class="u">' +
+            (thisWeek ? '到港' : '已到') + '</span></div></td>';
+        }
+        return '<td class="tl-cell log cur" title="' + esc(base) + ' · ' + l.mode + ' · ' + s.txt +
+          ' · ETD ' + (l.etd || '未排程') + (l.eta ? ' · ETA ' + l.eta : '') + '">' + sentHtml(s) + '</td>';
+      }
+      if (wi < curIdx) {
+        return '<td class="tl-cell log" title="' + esc(base) + ' · ' + l.mode + ' · 已发运 ' +
+          (s.sent ? qtyTxt : '0 BP') + ' · ' + s.txt + '">' + sentHtml(s) + '</td>';
+      }
+      const on = WK_RE.test(l.etd || '') && inWin(w, l.etd, l.eta || l.etd);
+      const tip = esc(base) + ' · ' + l.mode + ' · ' + qtyTxt + ' · ETD ' + l.etd + ' → ETA ' + (l.eta || '--');
+      return '<td class="tl-cell log">' + (on ? '<i class="lg-one ' + legColor(po, l) + '" title="' + tip + '"></i>' : '') + '</td>';
+    }).join('');
+  }
+
+  document.getElementById('tlBody').innerHTML = pos.map(po => {
+    const left = WK_RE.test(po.dueWeek || '') ? weekDiff(cur, po.dueWeek) : null;
+    const dueCls = left == null ? '' : (left < 0 || left <= 4 ? 'bad' : left <= 8 ? 'warn' : '');
+    /* 行 = 生产任务（每个基地任务一行）+ 运输航段（每段一行），不再挤在同一格里 */
+    const legs = poLegs(po);
+    const rowCount = Math.max(1, po.tasks.length + legs.length);
+
+    const poCell = '<td class="tl-po-cell" rowspan="' + rowCount + '"><div class="tl-po-wrap">' +
+      '<div class="tl-po-id">' + esc(po.id) + '</div>' +
+      '<div class="tl-po-name" title="' + esc(po.name) + '">' + esc(po.name) + '</div>' +
+      '<div class="tl-chips"><span class="tl-chip ' + dueCls + '" title="交付截止 ' + esc(po.dueWeek || '--') + '">🏁 ' +
+        (po.dueWeek ? shortWeek(po.dueWeek) : '--') + ' · ' +
+        (left == null ? '未设截止' : left >= 0 ? '剩' + left + '周' : '逾期' + (-left) + '周') + '</span></div></div></td>';
+
+    let rows = '';
+    po.tasks.forEach((t, ti) => {
+      const meta = BASE_META[t.base] || {};
+      const tr = taskRisks(po, t);
+      const stageTip = t.id + ' · ' + (meta.name || t.base) + ' · 产出 ' + (STAGE_LABEL[meta.stage] || '—') +
+        ' · 进度 ' + (t.progress || 0) + '%' + (tr.length ? ' · ' + tr[0].msg : '');
+      const stageSub = nodeShort(t.base) + '·' + (STAGE_LABEL[meta.stage] || '—');
+      rows += '<tr class="' + (ti === 0 ? 'po-start' : '') + '">' + (ti === 0 ? poCell : '') +
+        '<td class="tl-stage-cell"><div class="st prod" title="' + esc(stageTip) + '">生产</div>' +
+        '<small title="' + esc(stageTip) + '">' + esc(stageSub) + '</small></td>' +
+        prodCells(po, t) + '</tr>';
+    });
+    legs.forEach((l, li) => {
+      const tip = nodeName(l.from) + ' → ' + nodeName(l.to) + ' · ' + l.mode + ' · ' + fmt(l.qty) + ' BP' +
+        ' · 周期 ' + (l.weeks || 0) + ' 周（' + legCode(l) + '）' + (l.mat === 'pack' ? ' · 成品' : ' · 电芯');
+      const stageSub = nodeShort(l.from) + '→' + nodeShort(l.to) + '·' + legCode(l);
+      const first = po.tasks.length === 0 && li === 0;
+      rows += '<tr class="po-ship' + (first ? ' po-start' : '') + '">' + (first ? poCell : '') +
+        '<td class="tl-stage-cell"><div class="st ship" title="' + esc(tip) + '">运输</div>' +
+        '<small title="' + esc(tip) + '">' + esc(stageSub) + '</small></td>' +
+        shipCells(po, l) + '</tr>';
+    });
+    if (!po.tasks.length && !legs.length) {
+      return '<tr class="po-start">' + poCell +
+        '<td class="tl-stage-cell"><span class="w1-text">无任务</span></td>' +
+        weeks.map(() => '<td class="tl-cell"></td>').join('') + '</tr>';
+    }
+    return rows;
+  }).join('');
+
+  /* 周合计 GAP 行（sticky 在滚动区底部）；只统计 ≤ 当周，未来周不出现实绩 */
+  const weekTotals = weeks.map(w => {
+    let p = 0, a = 0, has = false;
+    pos.forEach(po => {
+      const pp = planOf(po, w), aa = actOf(po, w);
+      if (pp != null) p += pp;
+      if (aa != null && weekDiff(w, cur) >= 0) { a += aa; has = true; }
+    });
+    const gap = has && p ? a - p : null;
+    return { w, p, a, has, gap, rate: p ? Math.round(a / p * 100) : null };
+  });
+  document.getElementById('tlFoot').innerHTML = '<tr><td class="tl-label" colspan="2">周合计 GAP（生产）</td>' +
+    weekTotals.map(t => {
+      if (!t.has) return '<td class="none">—</td>';
+      const cls = t.gap >= 0 ? 'pos' : (t.rate != null && t.rate >= 60 ? 'mid' : 'bad');
+      return '<td class="' + cls + '" title="计划 ' + fmt(t.p) + ' · 实际 ' + fmt(t.a) + ' BP">' +
+        (t.gap >= 0 ? '+' : '−') + fmt(Math.abs(t.gap)) + '</td>';
+    }).join('') + '</tr>';
+}
+
+/* ============================================================
+ * 11. 渲染：详情
+ * ============================================================ */
+function renderDetail(){
+  const panel = document.getElementById('detailPanel');
+  const body = document.getElementById('detailBody');
+  if (!state.selected.taskId) {
+    panel.classList.add('collapsed');
+    body.innerHTML = '<div class="detail-empty"><div class="big-icon">📋</div>选择一条任务查看阶段、物流与海外组装明细</div>';
+    document.getElementById('detailTitle').textContent = '基地任务详情';
+    document.getElementById('detailSub').textContent = '--';
+    return;
+  }
+  const po = getPO(state.selected.poId);
+  const t = po && po.tasks.find(x => x.id === state.selected.taskId);
+  if (!t) { state.selected = { poId:null, taskId:null }; renderDetail(); return; }
+
+  panel.classList.remove('collapsed');
+  const meta = BASE_META[t.base] || { name: nodeName(t.base), type:'cn' };
+  document.getElementById('detailTitle').textContent = t.id + ' · ' + meta.name;
+  document.getElementById('detailSub').textContent = po.id + ' · ' + po.name + ' · ' + po.type;
+
+  const allRoutes = po.routes.map((r, i) => ({ ...r, idx:i }));
+
+  function metricInput(label, field, value){
+    return '<div class="stage-metric"><span class="m-label">' + label + '</span>' +
+      '<input type="number" min="0" step="1" data-field="' + field + '" value="' + value + '"></div>';
+  }
+
+  const riskHtml = (() => {
+    const items = taskRisks(po, t).concat(poRisks(po));
+    if (!items.length) return '<ul class="risk-list"><li class="ok"><span class="r-ico">✓</span>数据校验通过，与 PO 计划、航线状态一致</li></ul>';
+    return '<ul class="risk-list">' + items.map(r =>
+      '<li class="' + (r.level === 'error' ? 'error' : '') + '"><span class="r-ico">' +
+      (r.level === 'error' ? '✕' : '⚠') + '</span>' + r.msg + '</li>').join('') + '</ul>';
+  })();
+
+  /* 海外基地：电芯到货 → 组装齐套 */
+  const isOv = meta.type === 'ov';
+  const kitRate = (t.mpDemand || 0) > 0 ? Math.round((t.cellArrived || 0) / t.mpDemand * 100) : null;
+  const stageCellHtml = isOv
+    ? '<div class="stage-card ov">' +
+        '<div class="stage-card-head"><span class="stage-name">🚢 电芯到货 → 海外组装</span>' +
+          '<span class="stage-status ' + (kitRate == null ? '' : kitRate >= 80 ? 'ok' : kitRate >= 50 ? 'run' : 'bad') + '">' +
+          (kitRate == null ? '未设需求' : '齐套 ' + kitRate + '%') + '</span></div>' +
+        '<div class="stage-card-grid">' +
+          metricInput('电芯到货（BP）','cellArrived', t.cellArrived || 0) +
+          metricInput('组装需求（BP）','mpDemand', t.mpDemand || 0) +
+        '</div>' +
+        (kitRate == null ? '' :
+          '<div class="kit-bar"><span style="font-size:10px;color:#99aabb">齐套</span>' +
+          '<span class="bar"><span class="fill' + (kitRate < 50 ? ' bad' : kitRate < 80 ? ' warn' : '') + '" style="width:' + Math.min(100, kitRate) + '%"></span></span>' +
+          '<span class="pct">' + fmt(t.cellArrived || 0) + ' / ' + fmt(t.mpDemand || 0) + '</span></div>') +
+      '</div>'
+    : '<div class="stage-card">' +
+        '<div class="stage-card-head"><span class="stage-name">🔋 电芯</span>' +
+          '<span class="stage-status ' + (t.cellStock + t.cellWip > 0 ? 'run' : '') + '">' + (t.cellStock + t.cellWip > 0 ? '有数据' : '未开始') + '</span></div>' +
+        '<div class="stage-card-grid">' + metricInput('库存（BP）','cellStock',t.cellStock) + metricInput('在制（BP）','cellWip',t.cellWip) + '</div>' +
+      '</div>';
+
+  /* PO 周计划编辑 */
+  const forwardPlan = (po.planWeekly || []).filter(k => weekDiff(draft.week, k.week) >= 0)
+    .sort((a, b) => a.week < b.week ? -1 : 1).slice(0, 8);
+  const planHtml = forwardPlan.map(k => {
+    const a = actOf(po, k.week);
+    const isCur = k.week === draft.week;
+    return '<div class="plan-edit-row' + (isCur ? ' cur' : '') + '">' +
+      '<span class="pl-label">' + esc(k.week) + '</span>' +
+      '<input type="number" min="0" step="10" data-plan-edit="' + k.week + '" value="' + (k.plan || 0) + '">' +
+      '<span class="pl-unit">BP</span>' +
+      '<span class="pl-act" title="本周实际产出">' + (a == null ? '' : '实 ' + fmt(a)) + '</span>' +
+    '</div>';
+  }).join('');
+
+  /* 物流链：按产出物分组，链内按 ETD 排序；展示 ETD→ETA 换算与段间衔接 */
+  const flowGroups = ['cell', 'pack'].map(m => ({
+    m,
+    legs: allRoutes.filter(r => (r.mat === 'pack' ? 'pack' : 'cell') === m)
+      .sort((a, b) => ((a.departWeek || '9999') < (b.departWeek || '9999') ? -1 : 1))
+  })).filter(g => g.legs.length);
+  const flowsHtml = flowGroups.map(g => {
+    let seq = 0;
+    const items = g.legs.map(l => {
+      const hasQty = l.qty > 0;
+      const mySeq = hasQty ? SEQ[seq++] : null;
+      const eta = routeEta(po, l.idx);
+      const dly = routeStatusOf(po, l.idx) === '延误';
+      const bad = eta && legDueBad(po, { ...l, eta });
+      const st = hasQty ? legState({ ...l, etd: l.departWeek || '', eta }, draft.week) : null;
+      const handoff = (() => {
+        if (!hasQty || !WK_RE.test(l.departWeek || '')) return '';
+        const peers = g.legs.filter(x => x.idx !== l.idx && x.qty > 0);
+        const hf = legHandoff(po, peers.map(x => ({ ...x, etd: x.departWeek || '', eta: routeEta(po, x.idx) })),
+          { ...l, etd: l.departWeek, eta });
+        if (hf.conflict) return '<div style="font-size:10px;color:#c0392b;margin-top:4px">⚠ 衔接冲突：上段 ' +
+          esc(nodeName(hf.conflict.from)) + '→' + esc(nodeName(hf.conflict.to)) + ' ⚓' + hf.conflict.eta + '，本段 ETD ' + l.departWeek + ' 早于到港</div>';
+        if (hf.ok) return '<div style="font-size:10px;color:#1a8a4a;margin-top:4px">↳ 上段 ⚓' + hf.ok.eta + ' 到港后发运</div>';
+        return '';
+      })();
+      return '<div class="route-item">' +
+        '<div class="route-path"><b>' + (mySeq ? mySeq + ' ' : '') + esc(nodeName(l.from)) + '</b><span class="arrow">→</span><b>' + esc(nodeName(l.to)) + '</b>' +
+          '<span class="route-mode ' + (MODE_CLASS[l.mode] || 'truck') + '">' + l.mode + '</span>' +
+          (st === 'transit' ? '<span class="lg-transit">在途</span>' : st === 'arrived' ? '<span class="route-own-tag" style="background:#e6f7ee;color:#1a8a4a">已到港</span>' : '') +
+        '</div>' +
+        '<div class="route-edit">' +
+          '<span>物料 <select class="route-status" data-route-mat="' + l.idx + '" style="width:56px">' +
+            ['cell', 'pack'].map(mm => '<option value="' + mm + '"' + ((l.mat === 'pack' ? 'pack' : 'cell') === mm ? ' selected' : '') + '>' + MAT_LABEL[mm] + '</option>').join('') +
+          '</select></span>' +
+          '<span>周数 <input class="route-weeks" type="number" min="0" step="1" data-route-week="' + l.idx + '" value="' + l.weeks + '"></span>' +
+          '<span>发运 <input class="route-qty" type="number" min="0" step="10" data-route-qty="' + l.idx + '" value="' + (l.qty || 0) + '"></span>' +
+          '<span>ETD <input class="route-wk" type="text" placeholder="2026-W44" data-route-depart="' + l.idx + '" value="' + esc(l.departWeek || '') + '"></span>' +
+          (eta ? '<span class="route-eta' + (bad ? ' bad' : '') + '" title="ETA = ETD + 航行周数' + (dly ? ' + 延误 1 周' : '') + '">⚓ ETA ' + eta + '</span>'
+               : '<span style="font-size:10px;color:#b8c8d8">未排程</span>') +
+          '<select class="route-status' + (dly ? ' delay' : '') + '" data-route-status="' + l.idx + '">' +
+            ['正常', '延误'].map(s => '<option value="' + s + '"' + (dly === (s === '延误') ? ' selected' : '') + '>' + s + '</option>').join('') +
+          '</select>' +
+        '</div>' + handoff +
+      '</div>';
+    }).join('');
+    return '<div class="flow-head">' + MAT_LABEL[g.m] + '链 · ' + g.legs.filter(l => l.qty > 0).length + ' 段启用</div>' + items;
+  }).join('');
+
+  body.innerHTML =
+    '<div class="detail-section">' +
+      '<div class="detail-section-title">任务概览</div>' +
+      '<div class="field-grid">' +
+        '<div class="field"><span class="field-label">PN 项目</span><div class="field-value">' + esc(po.pn) + ' · ' + esc((PN_META[po.pn] || {}).name || '') + '</div></div>' +
+        '<div class="field"><span class="field-label">PO 批次</span><div class="field-value">' + esc(po.id) + '</div></div>' +
+        '<div class="field"><span class="field-label">交付窗口</span><div class="field-value">' + esc(po.window) + ' · 截止 ' + esc(po.dueWeek) + '</div></div>' +
+        '<div class="field"><span class="field-label">客户区域</span><div class="field-value">' + esc(CUST_META[po.customer] ? CUST_META[po.customer].name : po.customer) + '</div></div>' +
+        '<div class="field"><span class="field-label">基地属性</span><div class="field-value">' + (meta.type === 'cn' ? '国内基地' : '海外基地') + (meta.tag ? ' · ' + esc(meta.tag) : '') + '</div></div>' +
+      '</div>' +
+      '<div class="field-grid" style="margin-top:10px">' +
+        '<div class="field"><span class="field-label">生产状态</span>' +
+          '<select class="field-select" data-field="status">' +
+            ['待生产','生产中','已完成'].map(s => '<option value="' + s + '"' + (t.status === s ? ' selected' : '') + '>' + s + '</option>').join('') +
+          '</select></div>' +
+        '<div class="field"><span class="field-label">整体进度（%）</span>' +
+          '<input class="field-input" type="number" min="0" max="100" step="1" data-field="progress" value="' + t.progress + '"></div>' +
+        '<div class="field"><span class="field-label">运输状态</span>' +
+          '<select class="field-select" data-field="shipStatus">' +
+            ['未发货','在途','已签收'].map(s => '<option value="' + s + '"' + (t.shipStatus === s ? ' selected' : '') + '>' + s + '</option>').join('') +
+          '</select></div>' +
+        '<div class="field"><span class="field-label">风险等级</span><div class="field-value" style="color:' +
+          (riskLevelOf(po, t) === 'error' ? '#c0392b' : riskLevelOf(po, t) === 'warn' ? '#a37c1a' : '#1a8a4a') + '">' +
+          (riskLevelOf(po, t) === 'error' ? '存在错误' : riskLevelOf(po, t) === 'warn' ? '需关注' : '正常') + '</div></div>' +
+      '</div>' +
+    '</div>' +
+
+    '<div class="detail-section">' +
+      '<div class="detail-section-title">阶段明细 · 可编辑</div>' +
+      stageCellHtml +
+      '<div class="stage-card">' +
+        '<div class="stage-card-head"><span class="stage-name">🔧 M/P</span>' +
+          '<span class="stage-status ' + (t.mpStock + t.mpWip > 0 ? 'run' : '') + '">' + (t.mpStock + t.mpWip > 0 ? '有数据' : '未开始') + '</span></div>' +
+        '<div class="stage-card-grid">' + metricInput('库存（BP）','mpStock',t.mpStock) + metricInput('在制（BP）','mpWip',t.mpWip) + '</div>' +
+      '</div>' +
+      '<div class="stage-card">' +
+        '<div class="stage-card-head"><span class="stage-name">📦 翻包</span>' +
+          '<span class="stage-status ' + ((t.repack||0) > 0 ? 'run' : '') + '">' + ((t.repack||0) > 0 ? '有数据' : '未开始') + '</span></div>' +
+        '<div class="stage-card-grid">' + metricInput('翻包量（BP）','repack',t.repack||0) + '</div>' +
+      '</div>' +
+    '</div>' +
+
+    '<div class="detail-section">' +
+      '<div class="detail-section-title">PO 周计划 · 当前周起可编辑</div>' +
+      planHtml +
+      '<div class="wk-note">本周实际产出 = 完成 BP 的周增量；计划值用于计算周达成率与缺口</div>' +
+    '</div>' +
+
+    '<div class="detail-section">' +
+      '<div class="detail-section-title">周进度记录 · 历史周只读</div>' +
+      t.weekly.slice(-8).map((w, i, arr) => {
+        const prev = i > 0 ? arr[i - 1] : null;
+        const isCur = w.week === draft.week;
+        const d = prev ? w.progress - prev.progress : null;
+        const snapTip = esc('电芯 库存/在制 ' + fmt(w.cellStock) + '/' + fmt(w.cellWip) +
+          ' · M/P ' + fmt(w.mpStock) + '/' + fmt(w.mpWip) + ' · 翻包 ' + fmt(w.repack));
+        return '<div class="wk-row' + (isCur ? ' cur' : '') + '" title="' + snapTip + '">' +
+          '<span class="wk-label">' + esc(w.week) + '</span>' +
+          '<span class="wk-bar"><span class="wk-fill" style="width:' + Math.min(100, Math.max(0, w.progress)) + '%"></span></span>' +
+          '<span class="wk-pct">' + w.progress + '%' +
+            (d !== null && d !== 0 ? ' <span style="color:' + (d > 0 ? '#1a8a4a' : '#c0392b') + '">' + (d > 0 ? '+' : '') + d + '</span>' : '') +
+          '</span>' +
+          '<span class="ship-badge ' + (SHIP_CLASS[w.shipStatus] || 'wait') + '">' + esc(w.shipStatus) + '</span>' +
+          '<span class="wk-slot">' + (isCur ? '<span class="wk-cur-tag">当前周</span>' : '') + '</span>' +
+        '</div>';
+      }).join('') +
+      '<div class="wk-note">实际值只写入当前周（' + esc(draft.week) + '）；悬浮行可查看该周阶段量快照</div>' +
+    '</div>' +
+
+    '<div class="detail-section">' +
+      '<div class="detail-section-title">物流链 · ETD / ETA（按产出物分组，ETA = ETD + 航行周数）</div>' +
+      flowsHtml +
+    '</div>' +
+
+    '<div class="detail-section">' +
+      '<div class="detail-section-title">数据校验</div>' + riskHtml +
+    '</div>';
+
+  document.getElementById('detailFooter').textContent = '数据更新时间：' + hhmmss(new Date(draft.updatedAt));
+}
+
+/* ============================================================
+ * 12. 渲染入口 / Tab
+ * ============================================================ */
+function updateTabs(){
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.view === state.view));
+  document.getElementById('tableView').classList.toggle('hidden', state.view !== 'table');
+  document.getElementById('timelineView').classList.toggle('hidden', state.view !== 'timeline');
+  document.getElementById('paginationBar').classList.toggle('hidden', state.view !== 'table');
+  document.getElementById('panelTitle').textContent = state.view === 'table' ? '基地任务明细 · 可编辑' : '周计划时间轴 · W-1 → W+7';
+}
+
+function renderAll(){
+  renderHeader();
+  renderPNSelect();
+  renderPOSelect();
+  renderOverview();
+  renderFilters();
+  updateTabs();
+  if (state.view === 'table') renderTable(); else renderTimeline();
+  renderDetail();
+}
+
+/* ============================================================
+ * 13. 编辑提交
+ * ============================================================ */
+function touch(msg, type){
+  saveDraft();
+  renderAll();
+  if (msg) toast(msg, type);
+}
+
+function commitTaskField(poId, taskId, field, raw){
+  const po = getPO(poId); if (!po) return;
+  const t = po.tasks.find(x => x.id === taskId); if (!t) return;
+  let v = Number(raw);
+  if (!isFinite(v) || v < 0) return;
+  v = Math.round(v);
+  if (field === 'progress') v = Math.min(100, v);
+  if (t[field] === v) return;
+  const old = t[field];
+  t[field] = v;
+  if (field === 'progress' && v >= 100 && t.status !== '已完成') t.status = '已完成';
+  if (field === 'progress' && v < 100 && t.status === '已完成') t.status = '生产中';
+  syncWeekSnap(t);
+  touch(t.id + ' · ' + nodeName(t.base) + ' ' + fieldLabel(field) + ' ' + fmt(old) + ' → ' + fmt(v));
+}
+
+function fieldLabel(f){
+  return { cellStock:'电芯库存', cellWip:'电芯在制', mpStock:'M/P库存', mpWip:'M/P在制', repack:'翻包量',
+    progress:'进度', status:'生产状态', shipStatus:'运输状态', cellArrived:'电芯到货', mpDemand:'组装需求' }[f] || f;
+}
+
+/* ============================================================
+ * 14. 提示
+ * ============================================================ */
+let toastTimer = null;
+function toast(msg, type){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.toggle('err', type === 'err');
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+/* ============================================================
+ * 15. 事件绑定
+ * ============================================================ */
+function bindEvents(){
+  document.getElementById('pnSelect').addEventListener('change', e => {
+    state.currentPN = e.target.value;
+    state.currentPO = 'ALL';
+    state.filters.po = [];
+    state.page = 1;
+    renderAll();
+  });
+  document.getElementById('poSelect').addEventListener('change', e => {
+    state.currentPO = e.target.value;
+    state.page = 1;
+    state.filters.po = [];
+    renderAll();
+  });
+
+  document.querySelector('.tabs').addEventListener('click', e => {
+    const btn = e.target.closest('.tab-btn');
+    if (!btn) return;
+    state.view = btn.dataset.view;
+    renderAll();
+  });
+
+  let searchTimer = null;
+  document.getElementById('searchInput').addEventListener('input', e => {
+    state.search = e.target.value.trim();
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => { state.page = 1; renderOverview(); renderTable(); }, 180);
+  });
+
+  document.querySelector('.filter-panel').addEventListener('change', e => {
+    const inp = e.target.closest('input[data-filter]');
+    if (!inp) return;
+    const key = inp.dataset.filter, val = inp.value;
+    const arr = state.filters[key];
+    const i = arr.indexOf(val);
+    if (inp.checked && i < 0) arr.push(val);
+    if (!inp.checked && i >= 0) arr.splice(i, 1);
+    state.page = 1;
+    renderTable();
+    renderTimeline();
+  });
+
+  document.getElementById('riskOnly').addEventListener('change', e => {
+    state.riskOnly = e.target.checked;
+    state.page = 1;
+    renderOverview();
+    renderTable();
+  });
+
+  document.getElementById('ovRiskCard').addEventListener('click', () => {
+    state.riskOnly = !state.riskOnly;
+    state.page = 1;
+    renderOverview();
+    renderFilters();
+    renderTable();
+  });
+
+  document.getElementById('clearFilters').addEventListener('click', () => {
+    state.filters = { po:[], base:[], stage:[], mode:[], status:[] };
+    state.riskOnly = false;
+    state.search = '';
+    document.getElementById('searchInput').value = '';
+    state.page = 1;
+    renderAll();
+    toast('已清空筛选');
+  });
+
+  document.querySelector('#tableView thead').addEventListener('click', e => {
+    const th = e.target.closest('th[data-sort]');
+    if (!th) return;
+    const key = th.dataset.sort;
+    if (state.sortKey === key) state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc';
+    else { state.sortKey = key; state.sortDir = 'asc'; }
+    renderTable();
+  });
+
+  document.getElementById('pageSize').addEventListener('change', e => {
+    state.pageSize = Number(e.target.value);
+    state.page = 1;
+    renderTable();
+  });
+  document.getElementById('prevPage').addEventListener('click', () => { state.page--; renderTable(); });
+  document.getElementById('nextPage').addEventListener('click', () => { state.page++; renderTable(); });
+
+  /* 表格：行选择 + 行内数字编辑 */
+  const tbody = document.getElementById('tableBody');
+  tbody.addEventListener('click', e => {
+    const tr = e.target.closest('tr[data-task]');
+    if (!tr) return;
+    const span = e.target.closest('[data-edit]');
+    if (span && !span.dataset.editing) { startInlineEdit(span, tr); return; }
+    if (e.target.closest('[data-action="detail"]') || !span) {
+      state.selected = { poId: tr.dataset.po, taskId: tr.dataset.task };
+      renderTable();
+      renderDetail();
+    }
+  });
+
+  /* 时间轴：未来周的虚线框直接输入该任务周计划 */
+  const tlBodyEl = document.getElementById('tlBody');
+  tlBodyEl.addEventListener('change', e => {
+    const inp = e.target.closest('input.plan-input[data-plan-week]');
+    if (!inp) return;
+    const po = getPO(inp.dataset.planPo);
+    const t = po && po.tasks.find(x => x.id === inp.dataset.planTask);
+    if (!po || !t) return;
+    const w = inp.dataset.planWeek;
+    if (weekDiff(draft.week, w) < 0) { toast('历史周只读', 'err'); renderTimeline(); return; }
+    const old = taskPlanOf(po, t, w); if (old == null && inp.value === '') { renderTimeline(); return; }
+    const v = Math.max(0, Math.round(Number(inp.value) || 0));
+    if (v === (old == null ? 0 : old)) return;
+    setTaskPlanOf(po, t, w, v);
+    touch(po.id + ' · ' + nodeName(t.base) + ' · ' + w + ' 计划 ' + (old == null ? '--' : fmt(old)) + ' → ' + fmt(v) + ' BP');
+    renderTimeline();
+  });
+  tlBodyEl.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && e.target.matches('input.plan-input')) { e.preventDefault(); e.target.blur(); }
+    else if (e.key === 'Escape' && e.target.matches('input.plan-input')) { renderTimeline(); }
+  });
+
+  /* 详情：字段编辑 */
+  const detailBody = document.getElementById('detailBody');
+  detailBody.addEventListener('change', e => {
+    const el = e.target;
+
+    /* PO 周计划（详情内） */
+    if (el.dataset.planEdit) {
+      const po = getPO(state.selected.poId);
+      if (!po) return;
+      const w = el.dataset.planEdit;
+      const v = Math.max(0, Math.round(Number(el.value) || 0));
+      const old = planOf(po, w);
+      if (old === v) return;
+      setPlanOf(po, w, v);
+      touch(po.id + ' · ' + w + ' 计划产出 ' + fmt(old) + ' → ' + fmt(v) + ' BP');
+      return;
+    }
+
+    if (!state.selected.taskId) return;
+    const po = getPO(state.selected.poId);
+    const t = po.tasks.find(x => x.id === state.selected.taskId);
+    if (!t) return;
+    if (el.dataset.field) {
+      const f = el.dataset.field;
+      if (f === 'status' || f === 'shipStatus') {
+        if (t[f] !== el.value) { const old = t[f]; t[f] = el.value; syncWeekSnap(t); touch(t.id + ' · ' + nodeName(t.base) + ' ' + fieldLabel(f) + ' ' + old + ' → ' + el.value); }
+      } else {
+        commitTaskField(po.id, t.id, f, el.value);
+      }
+    } else if (el.dataset.routeWeek != null) {
+      const idx = Number(el.dataset.routeWeek);
+      const r = po.routes[idx];
+      const v = Math.max(0, Math.round(Number(el.value) || 0));
+      if (r.weeks !== v) { const old = r.weeks; r.weeks = v; touch('航线 ' + nodeName(r.from) + '→' + nodeName(r.to) + ' 周数 ' + old + ' → ' + v + ' 周'); }
+    } else if (el.dataset.routeQty != null) {
+      const idx = Number(el.dataset.routeQty);
+      const r = po.routes[idx];
+      const v = Math.max(0, Math.round(Number(el.value) || 0));
+      if ((r.qty || 0) !== v) { const old = r.qty || 0; r.qty = v; touch('航线 ' + nodeName(r.from) + '→' + nodeName(r.to) + ' 发运量 ' + fmt(old) + ' → ' + fmt(v) + ' BP'); }
+    } else if (el.dataset.routeDepart != null) {
+      const idx = Number(el.dataset.routeDepart);
+      const r = po.routes[idx];
+      const v = (el.value || '').trim().toUpperCase();
+      if (v && !WK_RE.test(v)) { toast('发运周格式应为 2026-W44', 'err'); renderDetail(); return; }
+      if ((r.departWeek || '') !== v) { r.departWeek = v; touch('航线 ' + nodeName(r.from) + '→' + nodeName(r.to) + ' 发运周 → ' + (v || '未发运')); }
+    } else if (el.dataset.routeMat != null) {
+      const idx = Number(el.dataset.routeMat);
+      const r = po.routes[idx];
+      const old = r.mat === 'pack' ? 'pack' : 'cell';
+      if (old !== el.value) { r.mat = el.value; touch('航线 ' + nodeName(r.from) + '→' + nodeName(r.to) + ' 物料 ' + MAT_LABEL[old] + ' → ' + MAT_LABEL[el.value]); }
+    } else if (el.dataset.routeStatus != null) {
+      const idx = Number(el.dataset.routeStatus);
+      const r = po.routes[idx];
+      const old = routeStatusOf(po, idx);
+      if (old !== el.value) { setRouteStatus(po, idx, el.value); touch('航线 ' + nodeName(r.from) + '→' + nodeName(r.to) + ' 状态 ' + old + ' → ' + el.value, el.value === '延误' ? 'err' : null); }
+    }
+  });
+  detailBody.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && e.target.matches('input[data-field], input[data-route-week], input[data-route-qty], input[data-route-depart], input[data-plan-edit]')) {
+      e.preventDefault();
+      e.target.blur();
+    }
+  });
+
+  document.getElementById('closeDetail').addEventListener('click', () => {
+    state.selected = { poId:null, taskId:null };
+    renderTable();
+    renderDetail();
+  });
+
+  document.getElementById('resetBtn').addEventListener('click', () => {
+    if (!confirm('重置将丢弃本地草稿，恢复到内置初始数据，确定继续？')) return;
+    localStorage.removeItem(LS_KEY);
+    draft = buildInitialDraft();
+    state.selected = { poId:null, taskId:null };
+    state.riskOnly = false;
+    state.filters = { po:[], base:[], stage:[], mode:[], status:[] };
+    state.search = '';
+    state.currentPN = 'ALL';
+    state.currentPO = 'ALL';
+    document.getElementById('searchInput').value = '';
+    state.page = 1;
+    renderAll();
+    toast('已恢复初始数据');
+  });
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && state.selected.taskId) {
+      state.selected = { poId:null, taskId:null };
+      renderTable(); renderDetail();
+    }
+  });
+}
+
+/* 行内编辑：把数字 span 换成 input */
+function startInlineEdit(span, tr){
+  const field = span.dataset.edit;
+  const poId = tr.dataset.po, taskId = tr.dataset.task;
+  const oldVal = span.textContent.replace(/,/g, '');
+  const inp = document.createElement('input');
+  inp.type = 'number'; inp.min = '0'; inp.step = '1';
+  inp.className = 'cell-input';
+  inp.value = oldVal;
+  span.dataset.editing = '1';
+  span.textContent = '';
+  span.appendChild(inp);
+  inp.focus(); inp.select();
+
+  let done = false;
+  const finish = commit => {
+    if (done) return;
+    done = true;
+    if (commit) commitTaskField(poId, taskId, field, inp.value);
+    else renderAll();
+  };
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); finish(true); }
+    else if (e.key === 'Escape') { e.preventDefault(); finish(false); }
+  });
+  inp.addEventListener('blur', () => finish(true));
+}
+
+
+/* ============================================================
+ * 16. 初始化
+ * ============================================================ */
+function init(){
+  const rolled = ensureWeekRollover();
+  renderAll();
+  bindEvents();
+  if (rolled) { saveDraft(); toast('已进入新数据周 ' + draft.week + '，上周数据已留痕'); }
+}
+init();
+</script>
+</body>
+</html>
