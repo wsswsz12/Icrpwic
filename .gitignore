@@ -9,3 +9,4 @@ build/
 *.tmp
 *.bak
 ~$*
+/screenshots/*.raw.png
